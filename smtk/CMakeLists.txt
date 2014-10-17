@@ -6,6 +6,9 @@ smtk_source_group(common)
 add_subdirectory(attribute)
 smtk_source_group(attribute)
 
+add_subdirectory(mesh)
+smtk_source_group(mesh)
+
 add_subdirectory(model)
 smtk_source_group(model)
 
@@ -18,8 +21,8 @@ smtk_source_group(io)
 add_subdirectory(view)
 smtk_source_group(view)
 
-set(smtk_headers ${commonHeaders} ${attributeHeaders} ${modelHeaders} ${simulationHeaders} ${ioHeaders} ${viewHeaders})
-set(smtk_srcs ${commonSrcs} ${attributeSrcs} ${modelSrcs} ${simulationSrcs} ${ioSrcs} ${viewSrcs})
+set(smtk_headers ${commonHeaders} ${attributeHeaders} ${meshHeaders} ${modelHeaders} ${simulationHeaders} ${ioHeaders} ${viewHeaders})
+set(smtk_srcs ${commonSrcs} ${attributeSrcs} ${meshSrcs} ${modelSrcs} ${simulationSrcs} ${ioSrcs} ${viewSrcs})
 
 add_library(SMTKCore ${smtk_srcs})
 target_link_libraries(SMTKCore
