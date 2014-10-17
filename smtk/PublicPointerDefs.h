@@ -63,6 +63,12 @@ namespace smtk
     class VoidItemDefinition;
   }
 
+  namespace mesh
+  {
+    class Manager;
+  }
+
+
   namespace model
   {
     class Arrangement;
@@ -169,6 +175,11 @@ namespace smtk
   namespace common
   {
     typedef smtk::shared_ptr< smtk::common::Resource > ResourcePtr;
+  }
+
+  namespace mesh
+  {
+    typedef smtk::shared_ptr< smtk::mesh::Manager >               ManagerPtr;
   }
 
   //Shiboken requires that we use fully qualified namespaces for all
