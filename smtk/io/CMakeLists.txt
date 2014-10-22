@@ -4,6 +4,7 @@ set(ioSrcs
   AttributeWriter.cxx
   ExportJSON.cxx
   ImportJSON.cxx
+  ImportMesh.cxx
   Logger.cxx
   ResourceSetReader.cxx
   ResourceSetWriter.cxx
@@ -17,6 +18,7 @@ set(ioHeaders
   AttributeWriter.h
   ExportJSON.h
   ImportJSON.h
+  ImportMesh.h
   Logger.h
   ResourceSetReader.h
   ResourceSetWriter.h
