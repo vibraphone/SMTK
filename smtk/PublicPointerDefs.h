@@ -72,6 +72,7 @@ namespace smtk
   namespace mesh
   {
     class Manager;
+    class Collection;
     namespace moab
     {
       //make the our moab interface class be the same as the moab::interface
@@ -192,6 +193,7 @@ namespace smtk
   namespace mesh
   {
     typedef smtk::shared_ptr< smtk::mesh::Manager >               ManagerPtr;
+    typedef smtk::shared_ptr< smtk::mesh::Collection >            CollectionPtr;
     namespace moab
     {
       typedef smtk::shared_ptr< smtk::mesh::moab::Interface >     InterfacePtr;
