@@ -25,28 +25,6 @@ target_link_libraries(SMTKCore
   LINK_PUBLIC cJSON
   LINK_PRIVATE ${Boost_LIBRARIES})
 
-foreach (target SMTKCore TestBuild_smtk_common TestBuild_smtk_attribute TestBuild_smtk_model TestBuild_smtk_io TestBuild_smtk_view)
-  target_include_directories(${target}
-    PUBLIC
-      "${Boost_INCLUDE_DIRS}"
-      "$<BUILD_INTERFACE:${SMTK_SOURCE_DIR}>"
-      "$<BUILD_INTERFACE:${SMTK_SOURCE_DIR}/thirdparty>"
-      "$<BUILD_INTERFACE:${SMTK_BINARY_DIR}/thirdparty>"
-      "$<BUILD_INTERFACE:${SMTK_SOURCE_DIR}/thirdparty/cJSON>"
-      "$<INSTALL_INTERFACE:include>"
-      "$<INSTALL_INTERFACE:include/smtk/thirdparty>"
-      "$<INSTALL_INTERFACE:include/smtk/thirdparty/cJSON>"
-    INTERFACE
-      "$<BUILD_INTERFACE:${SMTK_SOURCE_DIR}/thirdparty/pugixml>"
-  )
-  if (SMTK_HASH_STORAGE AND SMTK_USE_SYSTEM_SPARSEHASH)
-    target_include_directories(${target}
-      PUBLIC
-        "${SPARSEHASH_INCLUDE_DIRS}"
-    )
-  endif()
-endforeach()
-
 smtk_export_header(SMTKCore SMTKCoreExports.h)
 if (NOT BUILD_SHARED_LIBS AND SMTK_BUILD_PYTHON_WRAPPINGS)
   # Set position-independent flag when other project libs are shared.
@@ -96,6 +74,11 @@ if(SMTK_BUILD_PYTHON_WRAPPINGS AND Shiboken_FOUND)
     GENERATOR_ARGS --avoid-protected-hack
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     LOCAL_INCLUDE_DIRECTORIES
+      "$<BUILD_INTERFACE:${SMTK_SOURCE_DIR}>"
+      "$<BUILD_INTERFACE:${SMTK_BINARY_DIR}>"
+      "$<BUILD_INTERFACE:${SMTK_SOURCE_DIR}/thirdparty>"
+      "$<BUILD_INTERFACE:${SMTK_BINARY_DIR}/thirdparty>"
+      "$<BUILD_INTERFACE:${SMTK_SOURCE_DIR}/thirdparty/cJSON>"
       ${CMAKE_CURRENT_SOURCE_DIR}/common
       ${CMAKE_CURRENT_SOURCE_DIR}/attribute
       ${CMAKE_CURRENT_SOURCE_DIR}/model
@@ -142,3 +125,47 @@ add_subdirectory(extension)
 # model bridges that the user has enabled
 ################################################################################
 add_subdirectory(bridge)
+
+################################################################################
+# Target include directories must come after all subdirectories are processed.
+foreach (target
+    SMTKCore
+    TestBuild_smtk_attribute
+    TestBuild_smtk_bridge_cgm
+    TestBuild_smtk_bridge_discrete
+    TestBuild_smtk_bridge_discrete_kernel
+    TestBuild_smtk_bridge_exodus
+    TestBuild_smtk_bridge_remote
+    TestBuild_smtk_common
+    TestBuild_smtk_common_testing_cxx
+    TestBuild_smtk_extension_qt
+    TestBuild_smtk_extension_vtk
+    TestBuild_smtk_io
+    TestBuild_smtk_model
+    TestBuild_smtk_model_testing_cxx
+    TestBuild_smtk_simulation
+    TestBuild_smtk_view
+  )
+  if (TARGET ${target})
+    target_include_directories(${target}
+      PUBLIC
+        "${Boost_INCLUDE_DIRS}"
+        "$<BUILD_INTERFACE:${SMTK_SOURCE_DIR}>"
+        "$<BUILD_INTERFACE:${SMTK_BINARY_DIR}>"
+        "$<BUILD_INTERFACE:${SMTK_SOURCE_DIR}/thirdparty>"
+        "$<BUILD_INTERFACE:${SMTK_BINARY_DIR}/thirdparty>"
+        "$<BUILD_INTERFACE:${SMTK_SOURCE_DIR}/thirdparty/cJSON>"
+        "$<INSTALL_INTERFACE:include>"
+        "$<INSTALL_INTERFACE:include/smtk/thirdparty>"
+        "$<INSTALL_INTERFACE:include/smtk/thirdparty/cJSON>"
+      INTERFACE
+        "$<BUILD_INTERFACE:${SMTK_SOURCE_DIR}/thirdparty/pugixml>"
+    )
+    if (SMTK_HASH_STORAGE AND SMTK_USE_SYSTEM_SPARSEHASH)
+      target_include_directories(${target}
+        PUBLIC
+          "${SPARSEHASH_INCLUDE_DIRS}"
+      )
+    endif()
+  endif()
+endforeach()
