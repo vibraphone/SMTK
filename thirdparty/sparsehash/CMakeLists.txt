@@ -96,7 +96,7 @@ install(
     doc/sparsetable.html
     doc/sparse_hash_set.html
   DESTINATION
-    share/doc/sparsehash
+    share/doc/smtk/thirdparty/sparsehash
 )
 
 install(
@@ -109,7 +109,7 @@ install(
     template_util.h
     type_traits.h
   DESTINATION
-    include/sparsehash
+    include/smtk/thirdparty/sparsehash
 )
 
 install(
@@ -120,5 +120,5 @@ install(
     ${CMAKE_CURRENT_SOURCE_DIR}/internal/hashtable-common.h
     ${CMAKE_CURRENT_BINARY_DIR}/internal/sparseconfig.h
   DESTINATION
-    include/sparsehash/internal
+    include/smtk/thirdparty/sparsehash/internal
 )

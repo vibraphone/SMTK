@@ -1,5 +1,7 @@
 cmake_minimum_required (VERSION 2.8.11)
-cmake_policy(SET CMP0020 NEW)
+cmake_policy(SET CMP0020 NEW) # Link to qtmain when linked to QtCore on Windows
+cmake_policy(SET CMP0042 NEW) # Use @rpath on Mac OS X
+
 project(SMTK)
 
 ################################################################################
@@ -326,10 +328,6 @@ add_subdirectory(thirdparty)
 include_directories(
   "${CMAKE_CURRENT_BINARY_DIR}"
   "${CMAKE_CURRENT_SOURCE_DIR}"
-  "${SPARSEHASH_INCLUDE_DIRS}"
-  "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/cJSON"
-  "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/pugixml"
-  "${Boost_INCLUDE_DIRS}"
 )
 
 ################################################################################
