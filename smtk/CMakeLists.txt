@@ -147,6 +147,7 @@ foreach (target
     TestBuild_smtk_view
   )
   if (TARGET ${target})
+    message("Adding ${target} inc $<BUILD_INTERFACE:${SMTK_BINARY_DIR}>")
     target_include_directories(${target}
       PUBLIC
         "${Boost_INCLUDE_DIRS}"

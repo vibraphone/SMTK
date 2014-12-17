@@ -17,8 +17,6 @@ add_library(SMTKRemote ${RemoteLibSrcs})
 
 # Install the headers
 smtk_public_headers(${RemoteLibHeaders})
-# Force-add SMTKCore include dirs to TestBuild:
-target_link_libraries(TestBuild_smtk_bridge_remote PUBLIC SMTKCore)
 
 #set SMTKRemote to publicly link to SMTKCore and privately to Remus
 target_link_libraries(SMTKRemote
@@ -32,8 +30,8 @@ target_link_libraries(SMTKRemote
 
 target_include_directories(SMTKRemote
   PUBLIC
-  ${REMUS_INCLUDE_DIRS}
-  )
+    ${REMUS_INCLUDE_DIRS}
+)
 
 if (SMTK_BUILD_CGM)
   target_include_directories(SMTKRemote PRIVATE ${CGM_INCLUDE_DIRS})
