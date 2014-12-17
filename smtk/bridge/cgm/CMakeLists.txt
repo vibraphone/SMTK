@@ -1,6 +1,3 @@
-
-include_directories(${CGM_INCLUDE_DIRS})
-
 set(cgmSrcs
   Bridge.cxx
   CAUUID.cxx
@@ -54,6 +51,10 @@ install(FILES PointerDefs.h DESTINATION include/smtk/bridge/cgm)
 add_definitions(${CGM_DEFINES})
 
 add_library(cgmSMTK ${cgmSrcs})
+target_include_directories(cgmSMTK
+  PUBLIC
+    ${CGM_INCLUDE_DIRS}
+)
 
 #set cgmSMTK to publicly link to SMTKCore and CGM
 target_link_libraries(cgmSMTK
@@ -124,6 +125,10 @@ if (SMTK_BUILD_VTK)
     vtkIOXML
     ${CGM_LIBRARIES}
   )
+  target_include_directories(vtk-to-cholla
+    PUBLIC
+      ${CGM_INCLUDE_DIRS}
+  )
 endif()
 
 
@@ -160,5 +165,9 @@ endif()
 if (SMTK_ENABLE_TESTING)
   # ... and make header compilation tests link properly:
   target_link_libraries(TestBuild_smtk_bridge_cgm LINK_PRIVATE ${CGM_LIBRARIES})
+  target_include_directories(TestBuild_smtk_bridge_cgm
+    INTERFACE
+      ${CGM_INCLUDE_DIRS}
+  )
   add_subdirectory(testing)
 endif()

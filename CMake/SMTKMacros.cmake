@@ -36,7 +36,7 @@ function(smtk_add_header_test name dir_prefix)
   # include_directories(${sysTools_BINARY_DIR})
 
   #include the build directory for the export header
-  include_directories(${CMAKE_CURRENT_BINARY_DIR})
+  #include_directories(${CMAKE_CURRENT_BINARY_DIR})
   add_library(TestBuild_${name} ${cxxfiles} ${hfiles})
   # target_link_libraries(TestBuild_${name} sysTools)
   set_source_files_properties(${hfiles}

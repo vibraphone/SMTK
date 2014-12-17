@@ -1,6 +1,8 @@
 cmake_minimum_required (VERSION 2.8.11)
 cmake_policy(SET CMP0020 NEW) # Link to qtmain when linked to QtCore on Windows
-cmake_policy(SET CMP0042 NEW) # Use @rpath on Mac OS X
+if (${CMAKE_MAJOR_VERSION} GREATER 2)
+  cmake_policy(SET CMP0042 NEW) # Use @rpath on Mac OS X
+endif()
 
 project(SMTK)
 
