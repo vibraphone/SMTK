@@ -8,6 +8,7 @@ set(ioSrcs
   Logger.cxx
   ResourceSetReader.cxx
   ResourceSetWriter.cxx
+  WriteMesh.cxx
   XmlDocV1Parser.cxx
   XmlDocV2Parser.cxx
   XmlV2StringWriter.cxx
