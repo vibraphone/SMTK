@@ -20,12 +20,6 @@
 #include <set>
 #include <vector>
 
-//forward declare moab Interface class
-namespace moab
-{
-  class Interface;
-}
-
 namespace smtk
 {
   namespace common
@@ -73,6 +67,8 @@ namespace smtk
   {
     class Manager;
     class Collection;
+    class Interface;
+
     namespace moab
     {
       class Interface;
@@ -192,16 +188,12 @@ namespace smtk
   {
     typedef smtk::shared_ptr< smtk::mesh::Manager >               ManagerPtr;
     typedef smtk::shared_ptr< smtk::mesh::Collection >            CollectionPtr;
+    typedef smtk::shared_ptr< smtk::mesh::Interface >             InterfacePtr;
+
     namespace moab
     {
       typedef smtk::shared_ptr< smtk::mesh::moab::Interface >     InterfacePtr;
-
-      //required forward declare of function so that collection private
-      //interface can be extracted by other classes by using this helper
-      //function.
-      const smtk::mesh::moab::InterfacePtr& extractInterface(smtk::mesh::CollectionPtr c);
     }
-
   }
 
   //Shiboken requires that we use fully qualified namespaces for all
