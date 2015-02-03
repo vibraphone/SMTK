@@ -23,8 +23,8 @@ set(smtk_srcs ${commonSrcs} ${attributeSrcs} ${modelSrcs} ${simulationSrcs} ${io
 
 add_library(SMTKCore ${smtk_srcs})
 target_link_libraries(SMTKCore
-  LINK_PUBLIC cJSON
-  LINK_PRIVATE ${Boost_LIBRARIES} MOAB)
+  LINK_PUBLIC cJSON MOAB
+  LINK_PRIVATE ${Boost_LIBRARIES})
 
 target_include_directories(SMTKCore
   PRIVATE ${MOAB_INCLUDE_DIRS})
