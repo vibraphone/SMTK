@@ -68,6 +68,7 @@ namespace smtk
     class Manager;
     class Collection;
     class Interface;
+    class Allocator;
 
     namespace moab
     {
@@ -189,6 +190,7 @@ namespace smtk
     typedef smtk::shared_ptr< smtk::mesh::Manager >               ManagerPtr;
     typedef smtk::shared_ptr< smtk::mesh::Collection >            CollectionPtr;
     typedef smtk::shared_ptr< smtk::mesh::Interface >             InterfacePtr;
+    typedef smtk::shared_ptr< smtk::mesh::Allocator >             AllocatorPtr;
 
     namespace moab
     {
