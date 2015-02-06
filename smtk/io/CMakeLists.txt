@@ -6,6 +6,7 @@ set(ioSrcs
   ImportJSON.cxx
   ImportMesh.cxx
   Logger.cxx
+  ModelToMesh.cxx
   ResourceSetReader.cxx
   ResourceSetWriter.cxx
   WriteMesh.cxx
@@ -21,6 +22,7 @@ set(ioHeaders
   ImportJSON.h
   ImportMesh.h
   Logger.h
+  ModelToMesh.h
   ResourceSetReader.h
   ResourceSetWriter.h
   #XmlDocV1Parser.h
