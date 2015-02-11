@@ -19,8 +19,11 @@ SET(_VTK_INSTALL_NO_DEVELOPMENT ${VTK_INSTALL_NO_DEVELOPMENT})
 SET(VTK_INSTALL_NO_DEVELOPMENT ON)
 # Don't do VTK header test. It is broken at the moment.
 set(vtkSMTK_NO_HeaderTest 1)
+
+#disable vtk from install these headers
+set(VTK_INSTALL_NO_DEVELOPMENT ON)
 vtk_module_library(vtkSMTK ${VTKLibSrcs})
-SET(VTK_INSTALL_NO_DEVELOPMENT ${_VTK_INSTALL_NO_DEVELOPMENT})
+set(VTK_INSTALL_NO_DEVELOPMENT OFF)
 
 target_link_libraries(vtkSMTK
   LINK_PUBLIC
