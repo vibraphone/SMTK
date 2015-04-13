@@ -25,14 +25,23 @@
 #include "smtk/model/EntityRef.h"
 
 namespace smtk {
+  namespace io { class Logger; }
   namespace model {
 
 /// Bit-vector combinations of SessionInformation values for requesting information to transcribe.
 typedef unsigned long SessionInfoBits;
 
-class Session;
+class ArrangementHelper;
 class EntityRef;
+class Group;
+class CellEntity;
+class UseEntity;
+class Instance;
+class ShellEntity;
+class Model;
 class Operator;
+class Session;
+class SessionRef;
 typedef std::map<smtk::common::UUID,smtk::shared_ptr<Session> > UUIDsToSessions;
 typedef std::map<smtk::model::EntityRef,SessionInfoBits> DanglingEntities;
 
@@ -320,6 +329,7 @@ public:
   virtual int setup(const std::string& optName, const StringList& optVal);
 
   ManagerPtr manager() const;
+  smtk::io::Logger& log();
 
 protected:
   friend class io::ExportJSON;
@@ -333,6 +343,25 @@ protected:
 
   void setSessionId(const smtk::common::UUID& sessId);
   void setManager(Manager* mgr);
+
+  virtual Entity* addEntityRecord(const EntityRef& entRef);
+  virtual ArrangementHelper* createArrangementHelper();
+  int findOrAddRelatedEntities(const EntityRef& entRef, SessionInfoBits flags, ArrangementHelper* helper);
+  virtual int findOrAddCellAdjacencies(const CellEntity& entRef, SessionInfoBits request, ArrangementHelper* helper);
+  virtual int findOrAddCellUses(const CellEntity& entRef, SessionInfoBits request, ArrangementHelper* helper);
+  virtual int findOrAddOwningCell(const UseEntity& entRef, SessionInfoBits request, ArrangementHelper* helper);
+  virtual int findOrAddShellAdjacencies(const UseEntity& entRef, SessionInfoBits request, ArrangementHelper* helper);
+  virtual int findOrAddUseAdjacencies(const ShellEntity& entRef, SessionInfoBits request, ArrangementHelper* helper);
+  virtual int findOrAddGroupOwner(const Group& entRef, SessionInfoBits request, ArrangementHelper* helper);
+  virtual int findOrAddFreeCells(const Model& entRef, SessionInfoBits request, ArrangementHelper* helper);
+  virtual int findOrAddRelatedModels(const Model& entRef, SessionInfoBits request, ArrangementHelper* helper);
+  virtual int findOrAddPrototype(const Instance& entRef, SessionInfoBits request, ArrangementHelper* helper);
+  virtual int findOrAddRelatedModels(const SessionRef& entRef, SessionInfoBits request, ArrangementHelper* helper);
+  virtual int findOrAddRelatedGroups(const EntityRef& entRef, SessionInfoBits request, ArrangementHelper* helper);
+  virtual int findOrAddRelatedInstances(const EntityRef& entRef, SessionInfoBits request, ArrangementHelper* helper);
+  virtual SessionInfoBits findOrAddArrangements(const EntityRef& entRef, Entity* entRec, SessionInfoBits flags, ArrangementHelper* helper);
+  virtual SessionInfoBits updateProperties(const EntityRef& entRef, Entity* entRec, SessionInfoBits flags, ArrangementHelper* helper);
+  virtual SessionInfoBits updateTessellation(const EntityRef& entRef, SessionInfoBits flags, ArrangementHelper* helper);
 
 #ifndef SHIBOKEN_SKIP
   void initializeOperatorSystem(const OperatorConstructors* opList);
