@@ -1003,6 +1003,10 @@
 
     <namespace-type name="model">
       <!-- setup the model classes -->
+      <object-type name="ArrangementHelper">
+        <include file-name="smtk/model/ArrangementHelper.h" location="local"/>
+      </object-type>
+
       <value-type name="ArrangementReference">
         <include file-name="smtk/model/ArrangementKind.h" location="local"/>
       </value-type>
