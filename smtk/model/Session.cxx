@@ -98,7 +98,7 @@ int Session::transcribe(
   int retval = 0;
   if (requested)
     {
-    // Check that the entity IDs is dangling or we are forced to continue.
+    // Check that the entity ID is dangling or we are forced to continue.
     DanglingEntities::iterator it = this->m_dangling.find(entity);
     if (onlyDangling && it == this->m_dangling.end())
       { // The session has not been told that this UUID exists.
@@ -320,6 +320,10 @@ ArrangementHelper* Session::createArrangementHelper()
   */
 int Session::findOrAddRelatedEntities(const EntityRef& entRef, SessionInfoBits flags, ArrangementHelper* helper)
 {
+  if (helper->isMarked(entRef))
+    return 0;
+  helper->mark(entRef, true);
+
   EntityTypeBits entType = static_cast<EntityTypeBits>(entRef.entityFlags() & ENTITY_MASK);
   // Ignore bits restricting group membership:
   if (entType & GROUP_ENTITY)
