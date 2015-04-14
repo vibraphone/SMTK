@@ -51,7 +51,7 @@ class TestDiscreteSession(unittest.TestCase):
     print '\nFree cells:\n  %s' % '\n  '.join([x.name() for x in mod.cells()])
     print '\nGroups:\n  %s\n' % '\n  '.join([x.name() for x in mod.groups()])
     if len(mod.cells()) != 4:
-      print smtk.io.ExportJSON.fromModelManager(mgr)
+      print smtk.io.ExportJSON.fromModelManager(self.mgr)
     self.assertEqual(len(mod.cells()), 4, 'Expected 4 free cells')
 
     if self.shouldSave:
