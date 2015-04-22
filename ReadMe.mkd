@@ -21,8 +21,9 @@ What's below is a quick guide to building SMTK.
 In order to build SMTK you must have
 
 + A modern C++ compiler (gcc, clang, or VS),
-+ [CMake](http://cmake.org) 2.8.12 or newer, and
-+ [Boost](http://boost.org) 1.50.0 or newer.
++ [CMake](http://cmake.org) 2.8.12 or newer,
++ [Boost](http://boost.org) 1.50.0 or newer, and
++ [MOAB](https://bitbucket.org/fathomteam/moab).
 
 We recommend using [Ninja](http://martine.github.io/ninja/) for fast builds.
 
