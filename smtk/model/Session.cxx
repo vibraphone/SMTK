@@ -372,6 +372,8 @@ int Session::findOrAddRelatedEntities(const EntityRef& entRef, SessionInfoBits f
     smtkInfoMacro(this->log(), "Unknown entity type " << entRef.entityFlags() << " being transcribed.");
     break;
     }
+
+  helper->reset(entRef); // Remove all *generated* (not user-specified) arrangements, properties, etc.
   return numAdded;
 }
 

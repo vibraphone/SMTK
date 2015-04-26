@@ -168,6 +168,7 @@ public:
   const Tessellation* hasTessellation() const;
   const Tessellation* hasAnalysisMesh() const;
   const Tessellation* gotMesh() const; //prefers the analaysis over the display
+  bool removeTessellation(bool removeGen = false);
 
   bool hasAttributes() const;
   bool hasAttribute(const smtk::common::UUID &attribId) const;
@@ -220,6 +221,7 @@ public:
   int numberOfArrangementsOfKind(ArrangementKind k) const;
   Arrangement* findArrangement(ArrangementKind k, int index);
   const Arrangement* findArrangement(ArrangementKind k, int index) const;
+  bool clearArrangements();
 
   EntityRef relationFromArrangement(ArrangementKind k, int arrangementIndex, int offset) const;
 
