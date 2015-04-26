@@ -556,6 +556,22 @@ const Tessellation* EntityRef::hasTessellation() const
   return NULL;
 }
 
+/**\brief Remove the tessellation of the entity, returning true
+  *       if such a tessellation existed.
+  *
+  * If \a removeGen is true (false is the default), then
+  * also remove the generation-number property (a monotonically
+  * increasing integer property used to signal that the
+  * tessellation has changed).
+  */
+bool EntityRef::removeTessellation(bool removeGen)
+{
+  ManagerPtr mgr = this->m_manager.lock();
+  if (mgr && !this->m_entity.isNull())
+    return mgr->removeTessellation(this->m_entity, removeGen);
+  return false;
+}
+
 /** @name Attribute associations
   *
   */
@@ -911,6 +927,13 @@ const Arrangement* EntityRef::findArrangement(ArrangementKind k, int i) const
 {
   ManagerPtr mgr = this->m_manager.lock();
   return mgr->findArrangement(this->m_entity, k, i);
+}
+
+/// Delete all arrangements of this entity with prejudice.
+bool EntityRef::clearArrangements()
+{
+  ManagerPtr mgr = this->m_manager.lock();
+  return mgr->clearArrangements(this->m_entity);
 }
 
 /**\brief Return the relation specified by the \a offset into the specified arrangement.

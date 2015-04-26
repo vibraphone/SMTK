@@ -35,6 +35,8 @@ public:
   bool isMarked(const EntityRef& ent) const;
   void resetMarks();
 
+  void reset(const EntityRef& ent);
+
 protected:
   friend class Session;
   ArrangementHelper();

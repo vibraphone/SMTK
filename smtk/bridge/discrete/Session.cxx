@@ -437,7 +437,7 @@ smtk::model::ArrangementHelper* Session::createArrangementHelper()
 int Session::findOrAddCellAdjacencies(
   const smtk::model::CellEntity& cell,
   SessionInfoBits request,
-  smtk::model::ArrangementHelper* helper)
+  smtk::model::ArrangementHelper* hlp)
 {
   ArrangementHelper* helper = dynamic_cast<ArrangementHelper*>(hlp);
   int numEnts = 0;

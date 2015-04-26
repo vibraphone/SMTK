@@ -41,6 +41,11 @@
 
 //#include <boost/variant.hpp>
 
+// The name of the integer property used to store Tessellation generation numbers.
+// Starting with "_" indicates internal-use-only.
+// Short (8 bytes or less) means single word comparison suffices on many platforms => fast.
+#define SMTK_TESS_GEN_PROP "_tessgen"
+
 using namespace std;
 using namespace smtk::common;
 
@@ -1804,13 +1809,18 @@ EntityRefArray Manager::findEntitiesOfType(BitFlags flags, bool exactMatch)
   return this->entitiesMatchingFlagsAs<EntityRefArray>(flags, exactMatch);
 }
 
-/// Set the tessellation information for a given \a cellId.
+/**\brief Set the tessellation information for a given \a cellId.
+  *
+  * Note that calling this method automatically sets or increments
+  * the integer-valued "_tessgen" property on \a cellId.
+  * This property enables fast display updates when only a few
+  * entity tessellations have changed.
+  */
 Manager::tess_iter_type Manager::setTessellation(const UUID& cellId, const Tessellation& geom)
 {
   if (cellId.isNull())
-    {
     throw std::string("Nil cell ID");
-    }
+
   tess_iter_type result = this->m_tessellations->find(cellId);
   if (result == this->m_tessellations->end())
     {
@@ -1819,7 +1829,35 @@ Manager::tess_iter_type Manager::setTessellation(const UUID& cellId, const Tesse
     result = this->m_tessellations->insert(blank).first;
     }
   result->second = geom;
+
+  // Now set or increment the generation number.
+  IntegerList& gen(this->integerProperty(cellId, SMTK_TESS_GEN_PROP));
+  if (gen.empty())
+    gen.push_back(0);
+  else
+    ++gen[0];
+
   return result;
+}
+
+/**\brief Remove the tessellation of the given \a entityId.
+  *
+  * If the second argument is true, also remove the integer "generation number"
+  * property from the entity.
+  *
+  * Returns true when a tessellation was actually removed and false otherwise.
+  */
+bool Manager::removeTessellation(const smtk::common::UUID& entityId, bool removeGen)
+{
+  bool didRemove;
+  UUIDWithTessellation tref = this->m_tessellations->find(entityId);
+  didRemove = (tref == this->m_tessellations->end());
+  if (didRemove)
+    this->m_tessellations->erase(tref);
+
+  if (removeGen)
+    this->removeIntegerProperty(entityId, SMTK_TESS_GEN_PROP);
+  return didRemove;
 }
 
 /**\brief Add or replace information about the arrangement of an entity.
@@ -1936,6 +1974,32 @@ int Manager::unarrangeEntity(const UUID& entityId, ArrangementKind k, int index,
     ++result;
     }
   return result;
+}
+
+/**\brief Erase all arrangements for the given \a entityId.
+  *
+  * \warning
+  * Unlike unarrangeEntity(), this method does not alter arrangements
+  * for any other entity and thus can leave previously-bidirectional
+  * arrangements as unidirectional.
+  *
+  * Returns true when \a entity had a non-empty dictionary of
+  * arrangements and false otherwise.
+  *
+  * Note that this does not erase the entry in the map from UUIDs
+  * to arrangements, but rather clears the arrangement dictionary
+  * for the given UUID.
+  */
+bool Manager::clearArrangements(const smtk::common::UUID& entityId)
+{
+  UUIDWithArrangementDictionary iter =
+    this->m_arrangements->find(entityId);
+  bool didRemove =
+    (iter != this->m_arrangements->end()) &&
+    (!iter->second.empty());
+  if (didRemove)
+    iter->second.clear();
+  return didRemove;
 }
 
 /**\brief Returns true when the given \a entity has any arrangements of the given \a kind (otherwise false).

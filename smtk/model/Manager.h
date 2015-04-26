@@ -225,9 +225,11 @@ public:
   Collection entitiesMatchingFlagsAs(BitFlags flags, bool exactMatch = true);
 
   tess_iter_type setTessellation(const smtk::common::UUID& cellId, const Tessellation& geom);
+  bool removeTessellation(const smtk::common::UUID& cellId, bool removeGen = false);
 
   int arrangeEntity(const smtk::common::UUID& entityId, ArrangementKind, const Arrangement& arr, int index = -1);
   int unarrangeEntity(const smtk::common::UUID& entityId, ArrangementKind, int index, bool removeIfLast = false);
+  bool clearArrangements(const smtk::common::UUID& entityId);
 
   const Arrangements* hasArrangementsOfKindForEntity(
     const smtk::common::UUID& cellId,
