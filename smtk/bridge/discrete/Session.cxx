@@ -459,15 +459,48 @@ int Session::findOrAddCellAdjacencies(
     this->addEntities(cell, modelCell->NewIterator(vtkModelVertexType), smtk::model::INCLUDES, helper);
     }
 
-  return 0;
+  return numEnts;
 }
 
 int Session::findOrAddCellUses(
-  const smtk::model::CellEntity& entRef,
+  const smtk::model::CellEntity& cell,
   SessionInfoBits request,
-  smtk::model::ArrangementHelper* helper)
+  smtk::model::ArrangementHelper* hlp)
 {
-  return 0;
+  ArrangementHelper* helper = dynamic_cast<ArrangementHelper*>(hlp);
+  int numEnts = 0;
+  vtkModelItem* modelCell = this->entityForUUID(cell.entity());
+  vtkModelRegion* modelRegion = dynamic_cast<vtkModelRegion*>(modelCell);
+  vtkModelFace* modelFace = dynamic_cast<vtkModelFace*>(modelCell);
+  vtkModelEdge* modelEdge = dynamic_cast<vtkModelEdge*>(modelCell);
+  vtkModelVertex* modelVertex = dynamic_cast<vtkModelVertex*>(modelCell);
+  if (modelRegion)
+    {
+    // FIXME: CMB doesn't have volume uses; pretend one always exists.
+    }
+  if (modelFace)
+    {
+    this->addEntity(cell, modelFace->GetModelFaceUse(0), smtk::model::HAS_USE, helper, 0, smtk::model::NEGATIVE);
+    this->addEntity(cell, modelFace->GetModelFaceUse(1), smtk::model::HAS_USE, helper, 0, smtk::model::POSITIVE);
+    }
+  if (modelCell->GetNumberOfAssociations(vtkModelRegionType))
+    { // Add regions to model
+    this->addEntities(cell, modelCell->NewIterator(vtkModelRegionType), smtk::model::INCLUDES, helper);
+    }
+  else if(modelCell->GetNumberOfAssociations(vtkModelFaceType))
+    { // Add faces to model
+    this->addEntities(cell, modelCell->NewIterator(vtkModelFaceType), smtk::model::INCLUDES, helper);
+    }
+  else if(modelCell->GetNumberOfAssociations(vtkModelEdgeType))
+    { // Add edges to model
+    this->addEntities(cell, modelCell->NewIterator(vtkModelEdgeType), smtk::model::INCLUDES, helper);
+    }
+  else if(modelCell->GetNumberOfAssociations(vtkModelVertexType))
+    { // Add vertices to model
+    this->addEntities(cell, modelCell->NewIterator(vtkModelVertexType), smtk::model::INCLUDES, helper);
+    }
+
+  return numEnts;
 }
 
 int Session::findOrAddOwningCell(
@@ -843,6 +876,22 @@ void Session::addEntityArray(P& parent, C& childContainer, const H& helper, int 
         *cit, parent.manager(), relDepth);
     helper.invoke(parent, child);
     }
+}
+
+/// Add a child to \a parent's manager and a parent-child relationship to \a helper.
+void Session::addEntity(
+  const smtk::model::EntityRef& parent,
+  vtkModelItem* child,
+  smtk::model::ArrangementKind k,
+  ArrangementHelper* helper,
+  int sense,
+  smtk::model::Orientation orientation)
+{
+  smtk::model::EntityRef childRef(
+    parent.manager(),
+    this->findOrSetEntityUUID(child));
+  this->addEntityRecord(childRef);
+  helper->addArrangement(parent, k, childRef, sense, orientation);
 }
 
 /**\brief Add children to \a parent's manager and parent-child relationships to \a helper.

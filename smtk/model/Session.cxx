@@ -347,6 +347,7 @@ int Session::findOrAddRelatedEntities(const EntityRef& entRef, SessionInfoBits f
     {
   case CELL_ENTITY:
     numAdded += this->findOrAddCellAdjacencies(entRef.as<CellEntity>(), flags, helper);
+    numAdded += this->findOrAddCellUses(entRef.as<CellEntity>(), flags, helper);
     numAdded += this->findOrAddRelatedGroups(entRef, flags, helper);
     numAdded += this->findOrAddRelatedInstances(entRef, flags, helper);
     break;

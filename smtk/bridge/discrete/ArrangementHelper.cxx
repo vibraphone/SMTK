@@ -34,6 +34,22 @@ void ArrangementHelper::addArrangement(
   this->m_arrangements.insert(Spec(parent, child, k));
 }
 
+void ArrangementHelper::addArrangement(
+  const smtk::model::EntityRef& parent,
+  smtk::model::ArrangementKind k,
+  const smtk::model::EntityRef& child,
+  int sense,
+  smtk::model::Orientation orientation)
+{
+  // FIXME: if arrangement already exists, do not queue it.
+  this->m_arrangements.insert(
+    Spec(
+      parent,
+      child,
+      k,
+      2 * sense + (orientation == smtk::model::POSITIVE ? 1 : 0)));
+}
+
 void ArrangementHelper::resetArrangements()
 {
   this->m_arrangements.clear();

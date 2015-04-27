@@ -37,7 +37,16 @@ public:
   ArrangementHelper();
   virtual ~ArrangementHelper();
 
-  void addArrangement(const smtk::model::EntityRef& parent, smtk::model::ArrangementKind k, const smtk::model::EntityRef& child);
+  void addArrangement(
+    const smtk::model::EntityRef& parent,
+    smtk::model::ArrangementKind k,
+    const smtk::model::EntityRef& child);
+  void addArrangement(
+    const smtk::model::EntityRef& parent,
+    smtk::model::ArrangementKind k,
+    const smtk::model::EntityRef& child,
+    int sense,
+    smtk::model::Orientation orientation);
   void resetArrangements();
 
   virtual void doneAddingEntities();
