@@ -313,7 +313,7 @@ public:
   virtual std::string className() const { return Session::staticClassName(); }
   smtk::common::UUID sessionId() const;
 
-  int transcribe(const EntityRef& entity, SessionInfoBits flags, bool onlyDangling = true);
+  int transcribe(const EntityRef& entity, SessionInfoBits flags, bool onlyDangling = true, int depth = -1);
 
   virtual SessionInfoBits allSupportedInformation() const;
 
@@ -339,7 +339,7 @@ protected:
   Session();
   virtual ~Session();
 
-  virtual SessionInfoBits transcribeInternal(const EntityRef& entity, SessionInfoBits flags);
+  virtual SessionInfoBits transcribeInternal(const EntityRef& entity, SessionInfoBits flags, int depth = -1);
 
   void setSessionId(const smtk::common::UUID& sessId);
   void setManager(Manager* mgr);
