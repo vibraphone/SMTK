@@ -2259,6 +2259,35 @@ bool Manager::findDualArrangements(
   return false;
 }
 
+/**\brief A method to add bidirectional arrangements between a parent and child.
+  *
+  */
+bool Manager::addDualArrangement(
+  const smtk::common::UUID& parent, const smtk::common::UUID& child,
+  ArrangementKind kind, int sense, Orientation orientation)
+{
+  Entity* erec;
+  erec = this->findEntity(parent, false);
+  if (!erec)
+    return false;
+  EntityTypeBits parentType = static_cast<EntityTypeBits>(erec->entityFlags() & ENTITY_MASK);
+  int childIndex = erec->findOrAppendRelation(child);
+
+  erec = this->findEntity(child, false);
+  if (!erec)
+    return false;
+  EntityTypeBits childType = static_cast<EntityTypeBits>(erec->entityFlags() & ENTITY_MASK);
+  int parentIndex = erec->findOrAppendRelation(parent);
+
+  ArrangementKind dualKind = Dual(parentType, kind);
+  if (dualKind == KINDS_OF_ARRANGEMENTS)
+    return false;
+
+  this->arrangeEntity(parent, kind, Arrangement::Construct(parentType, kind, childIndex, sense, orientation));
+  this->arrangeEntity(child, dualKind, Arrangement::Construct(childType, dualKind, parentIndex, sense, orientation));
+  return true;
+}
+
 /**\brief Find a particular arrangement: a cell's HAS_USE with a given sense.
   *
   * The index of the matching arrangement is returned (or -1 if no such sense

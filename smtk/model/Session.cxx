@@ -254,6 +254,10 @@ smtk::io::Logger& Session::log()
   * This should always be at least the information requested but may
   * include more information.
   *
+  * Currently, it really only makes sense to call this method on a
+  * Model (i.e., not an edge, face, etc.); entire models at a time
+  * are retranscribed.
+  *
   * Subclasses may override this method.
   * If they do not, they should implement the virtual relationship helper methods.
   */
@@ -262,14 +266,23 @@ SessionInfoBits Session::transcribeInternal(const EntityRef& entRef, SessionInfo
   SessionInfoBits actual = SESSION_NOTHING;
   Entity* entRec = this->m_manager->findEntity(entRef.entity(), false);
   if (!entRec)
-    {
     entRec = this->addEntityRecord(entRef);
-    }
+
   // Get a subclass-specific helper for validating/repairing/creating arrangements
   ArrangementHelper* helper = this->createArrangementHelper();
 
+  // Now recursively find all related entities.
+  // This marks entRef, resets it (removing all relations), and stores state in the helper
+  // as required to re-transcribe the state in a manner as consistent with the previous state
+  // as possible. (For example the helper might store the sense number of an edge or vertex
+  // with respect to its parent face or edge so that retranscription results in the same
+  // senses if possible.)
   this->findOrAddRelatedEntities(entRef, flags, helper);
   helper->doneAddingEntities();
+
+  // We must re-find entRec because the addition of other entities may
+  // have caused a reallocation (in hash-based storage):
+  entRec = this->m_manager->findEntity(entRef.entity(), false);
 
   actual |= this->findOrAddArrangements(entRef, entRec, flags, helper);
   actual |= this->updateProperties(entRef, entRec, flags, helper);

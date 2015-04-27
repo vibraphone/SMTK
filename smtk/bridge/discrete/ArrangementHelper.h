@@ -48,10 +48,14 @@ protected:
     smtk::model::EntityRef parent;
     smtk::model::EntityRef child;
     smtk::model::ArrangementKind kind;
+    int sense;
 
-    Spec() : kind(smtk::model::KINDS_OF_ARRANGEMENTS) { }
+    Spec()
+      : kind(smtk::model::KINDS_OF_ARRANGEMENTS), sense(-1) { }
     Spec(const smtk::model::EntityRef& p, const smtk::model::EntityRef& c, smtk::model::ArrangementKind k)
-      : parent(p), child(c), kind(k) { }
+      : parent(p), child(c), kind(k), sense(-1) { }
+    Spec(const smtk::model::EntityRef& p, const smtk::model::EntityRef& c, smtk::model::ArrangementKind k, int s)
+      : parent(p), child(c), kind(k), sense(s) { }
 
     bool operator < (const Spec& other) const
       {
@@ -60,7 +64,9 @@ protected:
          (this->kind == other.kind &&
           (this->parent < other.parent ||
            (this->parent == other.parent &&
-            this->child < other.child)))) ? true : false;
+            (this->child < other.child ||
+             (this->child == other.child &&
+              this->sense < other.sense)))))) ? true : false;
       }
   };
 
