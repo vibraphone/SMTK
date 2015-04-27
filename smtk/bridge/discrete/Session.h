@@ -178,6 +178,13 @@ protected:
   template<class P, typename C, typename H>
   void addEntityArray(P& parent, C& childContainer, const H& method, int relDepth);
 
+  void addEntity(
+    const smtk::model::EntityRef& parent,
+    vtkModelItem* child,
+    smtk::model::ArrangementKind k,
+    ArrangementHelper* helper,
+    int sense = -1,
+    smtk::model::Orientation orientation = smtk::model::UNDEFINED);
   void addEntities(
     const smtk::model::EntityRef& parent,
     vtkModelItemIterator* it,
