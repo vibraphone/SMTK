@@ -93,7 +93,7 @@ smtk::common::UUID Session::sessionId() const
   * or when \a requested is 0.
   */
 int Session::transcribe(
-  const EntityRef& entity, SessionInfoBits requested, bool onlyDangling)
+  const EntityRef& entity, SessionInfoBits requested, bool onlyDangling, int depth)
 {
   int retval = 0;
   if (requested)
@@ -105,7 +105,7 @@ int Session::transcribe(
       return retval;
       }
     // Ask the subclass to transcribe information.
-    SessionInfoBits actual = this->transcribeInternal(entity, requested);
+    SessionInfoBits actual = this->transcribeInternal(entity, requested, depth);
     // Decide which bits of the request can possibly be honored...
     SessionInfoBits honorable = requested & this->allSupportedInformation();
     // ... and verify that all of those have been satisfied.
@@ -143,10 +143,10 @@ StringList Session::operatorNames(bool includeAdvanced) const
   for (it = ops.begin(); it != ops.end(); ++it)
     {
     // only show operators that are not advanced
-    if(!includeAdvanced && (*it)->advanceLevel() > 0)
+    if (!includeAdvanced && (*it)->advanceLevel() > 0)
       continue;
     nameList.push_back((*it)->type());
-    }    
+    }
   return nameList;
 }
 
@@ -261,7 +261,7 @@ smtk::io::Logger& Session::log()
   * Subclasses may override this method.
   * If they do not, they should implement the virtual relationship helper methods.
   */
-SessionInfoBits Session::transcribeInternal(const EntityRef& entRef, SessionInfoBits flags)
+SessionInfoBits Session::transcribeInternal(const EntityRef& entRef, SessionInfoBits flags, int depth)
 {
   SessionInfoBits actual = SESSION_NOTHING;
   Entity* entRec = this->m_manager->findEntity(entRef.entity(), false);
