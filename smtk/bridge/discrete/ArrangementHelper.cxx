@@ -10,6 +10,7 @@
 #include "smtk/bridge/discrete/ArrangementHelper.h"
 
 #include "smtk/model/ArrangementKind.h"
+#include "smtk/model/Manager.h"
 
 namespace smtk {
   namespace bridge {
@@ -43,7 +44,21 @@ void ArrangementHelper::doneAddingEntities()
 {
   std::set<Spec>::iterator it;
   for (it = this->m_arrangements.begin(); it != this->m_arrangements.end(); ++it)
-    std::cout << "Add " << it->parent.flagSummary(0) << " " << smtk::model::NameForArrangementKind(it->kind) << " " << it->child.flagSummary(0) << "\n";
+    {
+    std::cout
+      << "Add " << it->parent.flagSummary(0)
+      << " " << smtk::model::NameForArrangementKind(it->kind)
+      << " " << it->child.flagSummary(0) << "\n";
+    if (it->parent.manager() != it->child.manager())
+      {
+      std::cerr << "  Mismatched or nil managers. Skipping.\n";
+      }
+    it->parent.manager()->addDualArrangement(
+      it->parent.entity(), it->child.entity(),
+      it->kind,
+      /* sense */ it->sense / 2,
+      it->sense % 2 ? smtk::model::POSITIVE : smtk::model::NEGATIVE);
+    }
 }
 
     } // namespace discrete

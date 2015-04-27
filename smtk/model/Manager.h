@@ -252,6 +252,9 @@ public:
   bool findDualArrangements(
     const smtk::common::UUID& entityId, ArrangementKind kind, int index,
     ArrangementReferences& duals) const;
+  bool addDualArrangement(
+    const smtk::common::UUID& parent, const smtk::common::UUID& child,
+    ArrangementKind kind, int sense, Orientation orientation);
 
   int findCellHasUseWithSense(const smtk::common::UUID& cellId, int sense) const;
   std::set<int> findCellHasUsesWithOrientation(const smtk::common::UUID& cellId, Orientation orient) const;
