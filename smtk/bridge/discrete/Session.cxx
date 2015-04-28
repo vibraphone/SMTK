@@ -365,10 +365,10 @@ Entity* Session::addEntityRecord(const smtk::model::EntityRef& entRef)
     vtkModelFace* face = dynamic_cast<vtkModelFace*>(otherEntity);
     vtkModelEdge* edge = dynamic_cast<vtkModelEdge*>(otherEntity);
     vtkModelVertex* vert = dynamic_cast<vtkModelVertex*>(otherEntity);
-    if (region) entRef.manager()->addEntityOfTypeAndDimensionWithUUID(entRef.entity(), CELL_3D, -1);
-    else if (face) entRef.manager()->addEntityOfTypeAndDimensionWithUUID(entRef.entity(), CELL_2D, -1);
-    else if (edge) entRef.manager()->addEntityOfTypeAndDimensionWithUUID(entRef.entity(), CELL_1D, -1);
-    else if (vert) entRef.manager()->addEntityOfTypeAndDimensionWithUUID(entRef.entity(), CELL_0D, -1);
+    if (region) entRef.manager()->addEntityOfTypeAndDimensionWithUUID(entRef.entity(), CELL_3D, 3);
+    else if (face) entRef.manager()->addEntityOfTypeAndDimensionWithUUID(entRef.entity(), CELL_2D, 2);
+    else if (edge) entRef.manager()->addEntityOfTypeAndDimensionWithUUID(entRef.entity(), CELL_1D, 1);
+    else if (vert) entRef.manager()->addEntityOfTypeAndDimensionWithUUID(entRef.entity(), CELL_0D, 0);
     else
       {
       smtkErrorMacro(this->log(),
@@ -385,9 +385,9 @@ Entity* Session::addEntityRecord(const smtk::model::EntityRef& entRef)
     vtkModelMaterial* material = dynamic_cast<vtkModelMaterial*>(otherEntity);
     vtkModelShellUse* shell = dynamic_cast<vtkModelShellUse*>(otherEntity);
     vtkModelLoopUse* loop = dynamic_cast<vtkModelLoopUse*>(otherEntity);
-    if (faceUse) entRef.manager()->addEntityOfTypeAndDimensionWithUUID(entRef.entity(), FACE_USE, -1);
-    else if (edgeUse) entRef.manager()->addEntityOfTypeAndDimensionWithUUID(entRef.entity(), EDGE_USE, -1);
-    else if (vertUse) entRef.manager()->addEntityOfTypeAndDimensionWithUUID(entRef.entity(), VERTEX_USE, -1);
+    if (faceUse) entRef.manager()->addEntityOfTypeAndDimensionWithUUID(entRef.entity(), FACE_USE, 2);
+    else if (edgeUse) entRef.manager()->addEntityOfTypeAndDimensionWithUUID(entRef.entity(), EDGE_USE, 1);
+    else if (vertUse) entRef.manager()->addEntityOfTypeAndDimensionWithUUID(entRef.entity(), VERTEX_USE, 0);
     else if (group)
       {
       int groupFlags;
@@ -483,23 +483,6 @@ int Session::findOrAddCellUses(
     this->addEntity(cell, modelFace->GetModelFaceUse(0), smtk::model::HAS_USE, helper, 0, smtk::model::NEGATIVE);
     this->addEntity(cell, modelFace->GetModelFaceUse(1), smtk::model::HAS_USE, helper, 0, smtk::model::POSITIVE);
     }
-  if (modelCell->GetNumberOfAssociations(vtkModelRegionType))
-    { // Add regions to model
-    this->addEntities(cell, modelCell->NewIterator(vtkModelRegionType), smtk::model::INCLUDES, helper);
-    }
-  else if(modelCell->GetNumberOfAssociations(vtkModelFaceType))
-    { // Add faces to model
-    this->addEntities(cell, modelCell->NewIterator(vtkModelFaceType), smtk::model::INCLUDES, helper);
-    }
-  else if(modelCell->GetNumberOfAssociations(vtkModelEdgeType))
-    { // Add edges to model
-    this->addEntities(cell, modelCell->NewIterator(vtkModelEdgeType), smtk::model::INCLUDES, helper);
-    }
-  else if(modelCell->GetNumberOfAssociations(vtkModelVertexType))
-    { // Add vertices to model
-    this->addEntities(cell, modelCell->NewIterator(vtkModelVertexType), smtk::model::INCLUDES, helper);
-    }
-
   return numEnts;
 }
 
@@ -547,15 +530,15 @@ int Session::findOrAddFreeCells(
     { // Add regions to model
     this->addEntities(entRef, body->NewIterator(vtkModelRegionType), smtk::model::INCLUDES, helper);
     }
-  else if(body->GetNumberOfAssociations(vtkModelFaceType))
+  else if (body->GetNumberOfAssociations(vtkModelFaceType))
     { // Add faces to model
     this->addEntities(entRef, body->NewIterator(vtkModelFaceType), smtk::model::INCLUDES, helper);
     }
-  else if(body->GetNumberOfAssociations(vtkModelEdgeType))
+  else if (body->GetNumberOfAssociations(vtkModelEdgeType))
     { // Add edges to model
     this->addEntities(entRef, body->NewIterator(vtkModelEdgeType), smtk::model::INCLUDES, helper);
     }
-  else if(body->GetNumberOfAssociations(vtkModelVertexType))
+  else if (body->GetNumberOfAssociations(vtkModelVertexType))
     { // Add vertices to model
     this->addEntities(entRef, body->NewIterator(vtkModelVertexType), smtk::model::INCLUDES, helper);
     }
@@ -890,7 +873,15 @@ void Session::addEntity(
   smtk::model::EntityRef childRef(
     parent.manager(),
     this->findOrSetEntityUUID(child));
+  std::cout
+    << "** Add " << parent.name() << " - " << NameForArrangementKind(k) << " - " << childRef.name()
+    << " s " << sense << " " << (orientation == smtk::model::POSITIVE ? "+" : "-") << "\n";
+  /*
+  if (!helper->isMarked(childRef))
+    this->transcribe(childRef, smtk::model::SESSION_EVERYTHING, false, -1);
+    */
   this->addEntityRecord(childRef);
+  this->findOrAddRelatedEntities(childRef, smtk::model::SESSION_EVERYTHING, helper);
   helper->addArrangement(parent, k, childRef, sense, orientation);
 }
 
@@ -902,11 +893,7 @@ void Session::addEntities(const EntityRef& parent, vtkModelItemIterator* it, Arr
 {
   for (it->Begin(); !it->IsAtEnd(); it->Next())
     {
-    smtk::model::EntityRef child(
-      parent.manager(),
-      this->findOrSetEntityUUID(it->GetCurrentItem()));
-    this->addEntityRecord(child);
-    helper->addArrangement(parent, k, child);
+    this->addEntity(parent, it->GetCurrentItem(), k, helper, -1, smtk::model::UNDEFINED);
     }
   it->Delete();
 }
