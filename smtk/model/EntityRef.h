@@ -135,6 +135,7 @@ public:
   bool isVertexUse() const { return smtk::model::isVertexUse(this->entityFlags()); }
   bool isEdgeUse()   const { return smtk::model::isEdgeUse(this->entityFlags()); }
   bool isFaceUse()   const { return smtk::model::isFaceUse(this->entityFlags()); }
+  bool isVolumeUse() const { return smtk::model::isVolumeUse(this->entityFlags()); }
 
   /**\brief Reinterpret a entityref as a subclass.
     *
