@@ -1071,6 +1071,15 @@
       <value-type name="CellEntity" hash-function="smtk::model::entityrefHash">
         <include file-name="smtk/model/CellEntity.h" location="local"/>
         <modify-function signature="isValid(smtk::model::Entity**) const" remove="all"/>
+        <add-function
+          signature="uses()" static="no"
+          return-type="std::vector&lt; smtk::model::UseEntity &gt;">
+          <inject-code>
+            std::vector&lt; smtk::model::UseEntity &gt; result =
+              %CPPSELF->uses &lt; smtk::model::UseEntities &gt; ();
+            return %CONVERTTOPYTHON[ std::vector&lt; smtk::model::UseEntity &gt; ](result);
+          </inject-code>
+        </add-function>
       </value-type>
 
       <value-type name="Chain" hash-function="smtk::model::entityrefHash">
