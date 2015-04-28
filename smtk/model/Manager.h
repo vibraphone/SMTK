@@ -252,7 +252,7 @@ public:
     const smtk::common::UUID& parent, const smtk::common::UUID& child,
     ArrangementKind kind, int sense, Orientation orientation);
 
-  int findCellHasUseWithSense(const smtk::common::UUID& cellId, int sense) const;
+  int findCellHasUseWithSense(const smtk::common::UUID& cellId, const smtk::common::UUID& use, int sense) const;
   std::set<int> findCellHasUsesWithOrientation(const smtk::common::UUID& cellId, Orientation orient) const;
 
   smtk::common::UUID cellHasUseOfSenseAndOrientation(const smtk::common::UUID& cell, int sense, Orientation o) const;
