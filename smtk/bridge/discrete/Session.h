@@ -190,6 +190,13 @@ protected:
     vtkModelItemIterator* it,
     smtk::model::ArrangementKind k,
     ArrangementHelper* helper);
+  template<typename T>
+  void addEntities(
+    const smtk::model::EntityRef& parent,
+    vtkModelItemIterator* it,
+    smtk::model::ArrangementKind k,
+    ArrangementHelper* helper,
+    T& senseLookup);
 
   bool addTessellation(const smtk::model::EntityRef& cellOut, vtkModelGeometricEntity* cellIn);
   bool addProperties(smtk::model::EntityRef& cellOut, vtkModelItem* cellIn, smtk::model::BitFlags props = 0xff);
