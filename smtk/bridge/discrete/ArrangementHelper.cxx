@@ -62,9 +62,10 @@ void ArrangementHelper::doneAddingEntities()
   for (it = this->m_arrangements.begin(); it != this->m_arrangements.end(); ++it)
     {
     std::cout
-      << "Add " << it->parent.flagSummary(0)
+      << "Add " << it->parent.flagSummary(0) << " (" << it->parent.name() << ")"
       << " " << smtk::model::NameForArrangementKind(it->kind)
-      << " " << it->child.flagSummary(0) << "\n";
+      << " " << it->child.flagSummary(0) << " (" << it->child.name() << ")"
+      << " sense " << it->sense << "\n";
     if (it->parent.manager() != it->child.manager())
       {
       std::cerr << "  Mismatched or nil managers. Skipping.\n";
