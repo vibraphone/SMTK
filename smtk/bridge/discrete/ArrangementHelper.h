@@ -19,6 +19,9 @@
 
 #include <set>
 
+class vtkModelEdge;
+class vtkModelEdgeUse;
+
 namespace smtk {
   namespace bridge {
     namespace discrete {
@@ -51,7 +54,13 @@ public:
 
   virtual void doneAddingEntities();
 
+  // Start of discrete-session specific methods:
+  int findOrAssignSense(vtkModelEdgeUse* eu1, vtkModelEdgeUse* eu2);
+
 protected:
+
+  typedef std::map<vtkModelEdgeUse*,int> EdgeUseToSenseMap;
+  typedef std::map<vtkModelEdge*, EdgeUseToSenseMap> EdgeToUseSenseMap;
 
   struct Spec {
     smtk::model::EntityRef parent;
@@ -80,6 +89,7 @@ protected:
   };
 
   std::set<Spec> m_arrangements;
+  EdgeToUseSenseMap m_edgeUseSenses;
 
 private:
   ArrangementHelper(const ArrangementHelper& other); // Not implemented.

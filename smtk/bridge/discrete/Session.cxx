@@ -444,23 +444,44 @@ int Session::findOrAddCellAdjacencies(
   vtkModelItem* modelCell = this->entityForUUID(cell.entity());
   if (modelCell->GetNumberOfAssociations(vtkModelRegionType))
     { // Add regions to model
-    this->addEntities(cell, modelCell->NewIterator(vtkModelRegionType), smtk::model::INCLUDES, helper);
+    this->addEntities(cell, modelCell->NewIterator(vtkModelRegionType), smtk::model::SUPERSET_OF, helper);
     }
   else if(modelCell->GetNumberOfAssociations(vtkModelFaceType))
     { // Add faces to model
-    this->addEntities(cell, modelCell->NewIterator(vtkModelFaceType), smtk::model::INCLUDES, helper);
+    this->addEntities(cell, modelCell->NewIterator(vtkModelFaceType), smtk::model::SUPERSET_OF, helper);
     }
   else if(modelCell->GetNumberOfAssociations(vtkModelEdgeType))
     { // Add edges to model
-    this->addEntities(cell, modelCell->NewIterator(vtkModelEdgeType), smtk::model::INCLUDES, helper);
+    this->addEntities(cell, modelCell->NewIterator(vtkModelEdgeType), smtk::model::SUPERSET_OF, helper);
     }
   else if(modelCell->GetNumberOfAssociations(vtkModelVertexType))
     { // Add vertices to model
-    this->addEntities(cell, modelCell->NewIterator(vtkModelVertexType), smtk::model::INCLUDES, helper);
+    this->addEntities(cell, modelCell->NewIterator(vtkModelVertexType), smtk::model::SUPERSET_OF, helper);
     }
 
   return numEnts;
 }
+
+template<typename T>
+struct LookupSenseOfUse
+{
+  LookupSenseOfUse(ArrangementHelper* helper)
+    : m_helper(helper)
+    {
+    }
+
+  bool operator () (vtkModelItem* cgmEntity, int& sense, Orientation& orientation)
+    {
+    T* ent = dynamic_cast<T*>(cgmEntity);
+    if (!ent)
+      return false;
+    orientation = ent->GetDirection() ? smtk::model::POSITIVE : smtk::model::NEGATIVE;
+    sense = this->m_helper->findOrAssignSense(ent, ent->GetPairedModelEdgeUse());
+    return true;
+    }
+
+  ArrangementHelper* m_helper;
+};
 
 int Session::findOrAddCellUses(
   const smtk::model::CellEntity& cell,
@@ -482,6 +503,11 @@ int Session::findOrAddCellUses(
     {
     this->addEntity(cell, modelFace->GetModelFaceUse(0), smtk::model::HAS_USE, helper, 0, smtk::model::NEGATIVE);
     this->addEntity(cell, modelFace->GetModelFaceUse(1), smtk::model::HAS_USE, helper, 0, smtk::model::POSITIVE);
+    }
+  else if (modelEdge)
+    {
+    LookupSenseOfUse<vtkModelEdgeUse> senseLookup(helper);
+    this->addEntities(cell, modelEdge->NewModelEdgeUseIterator(), smtk::model::HAS_USE, helper, senseLookup);
     }
   return numEnts;
 }
@@ -889,11 +915,39 @@ void Session::addEntity(
   *
   * The parent-child relationships map \a parent to each entry of \a it with the given type \a k.
   */
-void Session::addEntities(const EntityRef& parent, vtkModelItemIterator* it, ArrangementKind k, ArrangementHelper* helper)
+void Session::addEntities(
+  const EntityRef& parent,
+  vtkModelItemIterator* it,
+  ArrangementKind k,
+  ArrangementHelper* helper)
 {
   for (it->Begin(); !it->IsAtEnd(); it->Next())
     {
     this->addEntity(parent, it->GetCurrentItem(), k, helper, -1, smtk::model::UNDEFINED);
+    }
+  it->Delete();
+}
+
+/**\brief Add children to \a parent's manager and parent-child relationships to \a helper.
+  *
+  * The parent-child relationships map \a parent to each entry of \a it with the given type \a k.
+  * This variant accepts a functor (\a senseLookup) which is invoked to determine the sense
+  * and orientation of each item so that the arrangement is configured properly.
+  */
+template<typename T>
+void Session::addEntities(
+  const smtk::model::EntityRef& parent,
+  vtkModelItemIterator* it,
+  smtk::model::ArrangementKind k,
+  ArrangementHelper* helper,
+  T& senseLookup)
+{
+  for (it->Begin(); !it->IsAtEnd(); it->Next())
+    {
+    int sense;
+    Orientation orientation;
+    senseLookup(it->GetCurrentItem(), sense, orientation);
+    this->addEntity(parent, it->GetCurrentItem(), k, helper, sense, orientation);
     }
   it->Delete();
 }

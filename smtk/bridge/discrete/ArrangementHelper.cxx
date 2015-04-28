@@ -12,6 +12,9 @@
 #include "smtk/model/ArrangementKind.h"
 #include "smtk/model/Manager.h"
 
+#include "vtkModelEdge.h"
+#include "vtkModelEdgeUse.h"
+
 namespace smtk {
   namespace bridge {
     namespace discrete {
@@ -53,6 +56,7 @@ void ArrangementHelper::addArrangement(
 void ArrangementHelper::resetArrangements()
 {
   this->m_arrangements.clear();
+  this->m_edgeUseSenses.clear();
 }
 
 /// This method is called after all related entities have been added and before arrangement updates are made.
@@ -76,6 +80,26 @@ void ArrangementHelper::doneAddingEntities()
       /* sense */ it->sense / 2,
       it->sense % 2 ? smtk::model::POSITIVE : smtk::model::NEGATIVE);
     }
+}
+
+int ArrangementHelper::findOrAssignSense(vtkModelEdgeUse* eu1, vtkModelEdgeUse* eu2)
+{
+  if (!eu1 || !eu2)
+    return -1;
+  vtkModelEdge* edge = eu1->GetModelEdge();
+  EdgeToUseSenseMap::iterator eit = this->m_edgeUseSenses.find(edge);
+  if (eit == this->m_edgeUseSenses.end())
+    {
+    EdgeUseToSenseMap entry;
+    entry[eu1] = 0;
+    entry[eu2] = 0;
+    this->m_edgeUseSenses[edge] = entry;
+    return 0;
+    }
+  int nextSense = eit->second.size() / 2;
+  eit->second[eu1] = nextSense;
+  eit->second[eu2] = nextSense;
+  return nextSense;
 }
 
     } // namespace discrete
