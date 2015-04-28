@@ -2316,13 +2316,27 @@ bool Manager::addDualArrangement(
   *
   * You may find all the HAS_USE arrangements of the cell and iterator over
   * them to discover all the sense numbers.
-  * There should be no duplicate senses for any given cell.
+  *
+  * There should be no duplicate senses for any given cell with the same orientation
+  * except in the case of vertex uses.
+  * Vertex uses have no orientation and each sense of a vertex corresponds to
+  * a unique connected point-set locus in the neighborhood of the domain with
+  * the vertex removed.
+  * So, a torus pinched to a conical point at one location on its boundary
+  * might have a periodic circular edge terminated by the same vertex at each end.
+  * However, the sense of the vertex uses for each endpoint would be different
+  * since subtracting the vertex from the bi-conic neighborhood yields distinct
+  * connected components. (The components are distinct inside small neighborhoods
+  * of the vertex even though the components are connected by an edge; this
+  * convention should be followed so that it is possible to compute deflection vectors
+  * that will remove the degeneracy of the vertex.)
   */
 int Manager::findCellHasUseWithSense(
-  const UUID& cellId, int sense) const
+  const UUID& cellId, const UUID& use, int sense) const
 {
+  const Entity* erec = this->findEntity(cellId);
   const Arrangements* arrs = this->hasArrangementsOfKindForEntity(cellId, HAS_USE);
-  if (arrs)
+  if (arrs && erec)
     {
     int i = 0;
     for (Arrangements::const_iterator it = arrs->begin(); it != arrs->end(); ++it, ++i)
@@ -2331,6 +2345,7 @@ int Manager::findCellHasUseWithSense(
       Orientation itOrient;
       if (
         it->IndexSenseAndOrientationFromCellHasUse(itIdx, itSense, itOrient) &&
+        itIdx >= 0 && erec->relations()[itIdx] == use &&
         itSense == sense)
         {
         return i;
