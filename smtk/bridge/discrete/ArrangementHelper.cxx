@@ -12,8 +12,12 @@
 #include "smtk/model/ArrangementKind.h"
 #include "smtk/model/Manager.h"
 
+#include "smtk/common/UUIDGenerator.h"
+
 #include "vtkModelEdge.h"
 #include "vtkModelEdgeUse.h"
+
+static smtk::common::UUIDGenerator s_idGen;
 
 namespace smtk {
   namespace bridge {
@@ -57,6 +61,7 @@ void ArrangementHelper::resetArrangements()
 {
   this->m_arrangements.clear();
   this->m_edgeUseSenses.clear();
+  this->m_regionIds.clear();
 }
 
 /// This method is called after all related entities have been added and before arrangement updates are made.
@@ -82,9 +87,12 @@ void ArrangementHelper::doneAddingEntities()
     }
 }
 
-int ArrangementHelper::findOrAssignSense(vtkModelEdgeUse* eu1, vtkModelEdgeUse* eu2)
+int ArrangementHelper::findOrAssignSense(vtkModelEdgeUse* eu1)
 {
-  if (!eu1 || !eu2)
+  if (!eu1)
+    return -1;
+  vtkModelEdgeUse* eu2 = eu1->GetPairedModelEdgeUse();
+  if (!eu2)
     return -1;
   vtkModelEdge* edge = eu1->GetModelEdge();
   EdgeToUseSenseMap::iterator eit = this->m_edgeUseSenses.find(edge);
@@ -100,6 +108,56 @@ int ArrangementHelper::findOrAssignSense(vtkModelEdgeUse* eu1, vtkModelEdgeUse* 
   eit->second[eu1] = nextSense;
   eit->second[eu2] = nextSense;
   return nextSense;
+}
+
+template<typename T>
+smtk::common::UUID IdForEntity(T* ent, std::map<T*,smtk::common::UUID>& fwd, std::map<smtk::common::UUID,T*>& bck)
+{
+  if (!ent)
+    return smtk::common::UUID::null();
+
+  typename std::map<T*,smtk::common::UUID>::const_iterator it = fwd.find(ent);
+  if (it == fwd.end())
+    {
+    smtk::common::UUID regionId = s_idGen.random();
+    fwd[ent] = regionId;
+    bck[regionId] = ent;
+    return regionId;
+    }
+  return it->second;
+}
+
+template<typename T>
+T* EntityFromId(const smtk::common::UUID& entId, std::map<smtk::common::UUID,T*>& bck)
+{
+  typename std::map<smtk::common::UUID,T*>::const_iterator it = bck.find(entId);
+  if (it == bck.end())
+    return NULL;
+  return it->second;
+}
+
+/// Given a discrete-model region (volume), return a UUID for it.
+smtk::common::UUID ArrangementHelper::useForRegion(vtkModelRegion* region)
+{
+  return IdForEntity(region, this->m_regionIds, this->m_regions);
+}
+
+/// Given the UUID for a VolumeUse, return the discrete-model Region associated with it.
+vtkModelRegion* ArrangementHelper::regionFromUseId(const smtk::common::UUID& volumeUseId)
+{
+  return EntityFromId(volumeUseId, this->m_regions);
+}
+
+/// Given a discrete-model edge-use, return a UUID for a chain bounding it.
+smtk::common::UUID ArrangementHelper::chainForEdgeUse(vtkModelEdgeUse* edgeUse)
+{
+  return IdForEntity(edgeUse, this->m_chainIds, this->m_chains);
+}
+
+/// Given the UUID for a chain, return the discrete-model edge-use associated with it.
+vtkModelEdgeUse* ArrangementHelper::edgeUseFromChainId(const smtk::common::UUID& chainId)
+{
+  return EntityFromId(chainId, this->m_chains);
 }
 
     } // namespace discrete

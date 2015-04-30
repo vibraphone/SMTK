@@ -1374,6 +1374,24 @@
       <value-type name="UseEntity" hash-function="smtk::model::entityrefHash">
         <include file-name="smtk/model/UseEntity.h" location="local"/>
         <modify-function signature="isValid(smtk::model::Entity**) const" remove="all"/>
+        <add-function
+          signature="boundingShellEntities()" static="no"
+          return-type="std::vector&lt; smtk::model::ShellEntity &gt;">
+          <inject-code>
+            std::vector&lt; smtk::model::ShellEntity &gt; result =
+              %CPPSELF->boundingShellEntities &lt; smtk::model::ShellEntities &gt; ();
+            return %CONVERTTOPYTHON[ std::vector&lt; smtk::model::ShellEntity &gt; ](result);
+          </inject-code>
+        </add-function>
+        <add-function
+          signature="shellEntities()" static="no"
+          return-type="std::vector&lt; smtk::model::ShellEntity &gt;">
+          <inject-code>
+            std::vector&lt; smtk::model::ShellEntity &gt; result =
+              %CPPSELF->shellEntities &lt; smtk::model::ShellEntities &gt; ();
+            return %CONVERTTOPYTHON[ std::vector&lt; smtk::model::ShellEntity &gt; ](result);
+          </inject-code>
+        </add-function>
       </value-type>
 
       <value-type name="Vertex" hash-function="smtk::model::entityrefHash">
