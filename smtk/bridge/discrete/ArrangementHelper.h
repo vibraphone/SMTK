@@ -21,6 +21,7 @@
 
 class vtkModelEdge;
 class vtkModelEdgeUse;
+class vtkModelRegion;
 
 namespace smtk {
   namespace bridge {
@@ -55,12 +56,22 @@ public:
   virtual void doneAddingEntities();
 
   // Start of discrete-session specific methods:
-  int findOrAssignSense(vtkModelEdgeUse* eu1, vtkModelEdgeUse* eu2);
+  int findOrAssignSense(vtkModelEdgeUse* eu1);
+
+  smtk::common::UUID useForRegion(vtkModelRegion*);
+  vtkModelRegion* regionFromUseId(const smtk::common::UUID&);
+
+  smtk::common::UUID chainForEdgeUse(vtkModelEdgeUse*);
+  vtkModelEdgeUse* edgeUseFromChainId(const smtk::common::UUID&);
 
 protected:
 
   typedef std::map<vtkModelEdgeUse*,int> EdgeUseToSenseMap;
   typedef std::map<vtkModelEdge*, EdgeUseToSenseMap> EdgeToUseSenseMap;
+  typedef std::map<vtkModelRegion*, smtk::common::UUID> VolumeToUseIdMap;
+  typedef std::map<smtk::common::UUID, vtkModelRegion*> UseIdToVolumeMap;
+  typedef std::map<vtkModelEdgeUse*, smtk::common::UUID> EdgeToChainIdMap;
+  typedef std::map<smtk::common::UUID, vtkModelEdgeUse*> ChainIdToEdgeMap;
 
   struct Spec {
     smtk::model::EntityRef parent;
@@ -90,6 +101,10 @@ protected:
 
   std::set<Spec> m_arrangements;
   EdgeToUseSenseMap m_edgeUseSenses;
+  VolumeToUseIdMap m_regionIds;
+  UseIdToVolumeMap m_regions;
+  EdgeToChainIdMap m_chainIds;
+  ChainIdToEdgeMap m_chains;
 
 private:
   ArrangementHelper(const ArrangementHelper& other); // Not implemented.
