@@ -851,6 +851,16 @@
         %PYARG_0 = %CONVERTTOPYTHON[%RETURN_TYPE](%0);
       </inject-code>
     </add-function>
+    <add-function signature="pointerAsString()"
+      static="NO"
+      return-type="std::string">
+      <inject-code class="target" position="beginning">
+        std::ostringstream result;
+        result &lt;&lt; %CPPSELF-&gt;get();
+        %RETURN_TYPE %0 = result.str();
+        %PYARG_0 = %CONVERTTOPYTHON[%RETURN_TYPE](%0);
+      </inject-code>
+    </add-function>
 
     <!-- Fix improper dereferencing and/or Python conversion of entityref methods -->
     <!--
