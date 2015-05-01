@@ -439,10 +439,36 @@ int Session::findOrAddCellAdjacencies(
   SessionInfoBits request,
   smtk::model::ArrangementHelper* hlp)
 {
-  std::cout << "  Adjacencies for cell (" << cell.flagSummary(0) << ", " << cell.name() << ")\n";
   ArrangementHelper* helper = dynamic_cast<ArrangementHelper*>(hlp);
   int numEnts = 0;
   vtkModelItem* modelCell = this->entityForUUID(cell.entity());
+
+  vtkModelRegion* modelRegion = dynamic_cast<vtkModelRegion*>(modelCell);
+  vtkModelFace* modelFace = dynamic_cast<vtkModelFace*>(modelCell);
+  vtkModelEdge* modelEdge = dynamic_cast<vtkModelEdge*>(modelCell);
+  vtkModelVertex* modelVertex = dynamic_cast<vtkModelVertex*>(modelCell);
+  if (modelRegion)
+    {
+    numEnts += this->addEntities(cell, modelRegion->NewAdjacentModelFaceIterator(), smtk::model::SUPERSET_OF, helper);
+    }
+  if (modelFace)
+    {
+    for (int r = 0; r < modelFace->GetNumberOfModelRegions(); ++r, ++numEnts)
+      this->addEntity(modelFace->GetModelRegion(r), cell, smtk::model::SUPERSET_OF, helper);
+    numEnts += this->addEntities(cell, modelFace->NewAdjacentModelEdgeIterator(), smtk::model::SUPERSET_OF, helper);
+    }
+  if (modelEdge)
+    {
+    numEnts += this->addEntities(modelEdge->NewAdjacentModelFaceIterator(), cell, smtk::model::SUPERSET_OF, helper);
+    int nv = modelEdge->GetNumberOfModelVertexUses();
+    for (int v = 0; v < nv; ++v, ++numEnts)
+      this->addEntity(cell, modelEdge->GetAdjacentModelVertex(v), smtk::model::SUPERSET_OF, helper);
+    }
+  if (modelVertex)
+    {
+    numEnts += this->addEntities(modelVertex->NewAdjacentModelEdgeIterator(), cell, smtk::model::SUPERSET_OF, helper);
+    }
+  /*
   if (modelCell->GetNumberOfAssociations(vtkModelRegionType))
     { // Add regions to model
     numEnts = this->addEntities(cell, modelCell->NewIterator(vtkModelRegionType), smtk::model::SUPERSET_OF, helper);
@@ -459,6 +485,8 @@ int Session::findOrAddCellAdjacencies(
     { // Add vertices to model
     numEnts = this->addEntities(cell, modelCell->NewIterator(vtkModelVertexType), smtk::model::SUPERSET_OF, helper);
     }
+    */
+  std::cout << "  Adjacencies for cell (" << cell.flagSummary(0) << ", " << cell.name() << "): " << numEnts << "\n";
 
   return numEnts;
 }
