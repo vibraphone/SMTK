@@ -691,8 +691,10 @@ int Session::findOrAddShellAdjacencies(
         }
 
       // Have the helper create a "virtual" Chain of vertex uses and add relations to those.
-      smtk::model::Chain childRef(entRef.manager(), helper->chainForEdgeUse(dscEdgeUse));
-      this->addEntityRecord(childRef);
+      // Would call this->addEntityRecord(childRef); but there is no matching discrete item...
+      // ... so manually insert the chain.
+      smtk::model::Chain childRef =
+        entRef.manager()->insertChain(helper->chainForEdgeUse(dscEdgeUse));
       this->findOrAddRelatedEntities(childRef, smtk::model::SESSION_EVERYTHING, helper);
       helper->addArrangement(entRef, smtk::model::INCLUDES, childRef);
       numEnts += 2; // loop + outer chain
@@ -767,6 +769,7 @@ int Session::findOrAddUseAdjacencies(
   vtkModelItem* dscEnt = this->entityForUUID(entRef.entity());
   vtkModelShellUse* dscShell;
   vtkModelLoopUse* dscLoop;
+  vtkModelEdgeUse* dscEdgeUse;
   if (entRef.isShell() && (dscShell = dynamic_cast<vtkModelShellUse*>(dscEnt)))
     {
     vtkModelRegion* region = dscShell->GetModelRegion();
@@ -856,8 +859,13 @@ int Session::findOrAddUseAdjacencies(
     // Add child edge-uses of loop
     numEnts += this->addEntities(entRef, dscLoop->NewModelEdgeUseIterator(), smtk::model::HAS_USE, helper);
     }
-  else if (entRef.isChain()) // && xxx)
+  else if (entRef.isChain() && (dscEdgeUse = helper->edgeUseFromChainId(entRef.entity())))
     {
+    // Add parent edge use to chain
+    this->addEntity(dscEdgeUse, entRef, smtk::model::INCLUDES, helper);
+
+    // Add child vertex uses
+    numEnts += this->addEntities(entRef, dscEdgeUse->NewIterator(vtkModelVertexUseType), smtk::model::HAS_USE, helper);
     }
   return numEnts;
 }
