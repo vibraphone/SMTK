@@ -476,25 +476,24 @@ int Session::findOrAddCellAdjacencies(
     {
     numEnts += this->addEntities(modelVertex->NewAdjacentModelEdgeIterator(), cell, smtk::model::SUPERSET_OF, helper);
     }
-  /*
+
+  // Also consider included cells (i.e., not on the boundary but interior to the cell's point locus)
   if (modelCell->GetNumberOfAssociations(vtkModelRegionType))
     { // Add regions to model
-    numEnts = this->addEntities(cell, modelCell->NewIterator(vtkModelRegionType), smtk::model::SUPERSET_OF, helper);
+    numEnts = this->addEntities(cell, modelCell->NewIterator(vtkModelRegionType), smtk::model::INCLUDES, helper);
     }
   else if(modelCell->GetNumberOfAssociations(vtkModelFaceType))
     { // Add faces to model
-    numEnts = this->addEntities(cell, modelCell->NewIterator(vtkModelFaceType), smtk::model::SUPERSET_OF, helper);
+    numEnts = this->addEntities(cell, modelCell->NewIterator(vtkModelFaceType), smtk::model::INCLUDES, helper);
     }
   else if(modelCell->GetNumberOfAssociations(vtkModelEdgeType))
     { // Add edges to model
-    numEnts = this->addEntities(cell, modelCell->NewIterator(vtkModelEdgeType), smtk::model::SUPERSET_OF, helper);
+    numEnts = this->addEntities(cell, modelCell->NewIterator(vtkModelEdgeType), smtk::model::INCLUDES, helper);
     }
   else if(modelCell->GetNumberOfAssociations(vtkModelVertexType))
     { // Add vertices to model
-    numEnts = this->addEntities(cell, modelCell->NewIterator(vtkModelVertexType), smtk::model::SUPERSET_OF, helper);
+    numEnts = this->addEntities(cell, modelCell->NewIterator(vtkModelVertexType), smtk::model::INCLUDES, helper);
     }
-    */
-  std::cout << "  Adjacencies for cell (" << cell.flagSummary(0) << ", " << cell.name() << "): " << numEnts << "\n";
 
   return numEnts;
 }
@@ -567,7 +566,6 @@ int Session::findOrAddCellUses(
   SessionInfoBits request,
   smtk::model::ArrangementHelper* hlp)
 {
-  std::cout << "  Uses for cell (" << cell.flagSummary(0) << ", " << cell.name() << ")\n";
   ArrangementHelper* helper = dynamic_cast<ArrangementHelper*>(hlp);
   int numEnts = 0;
   vtkModelItem* modelCell = this->entityForUUID(cell.entity());
@@ -979,8 +977,10 @@ int Session::findOrAddRelatedGroups(
   if (!ent)
     return 0;
 
-  this->addEntities(ent->NewModelEntityGroupIterator(), entRef, smtk::model::SUPERSET_OF, helper);
-  return 0;
+  int numGroups = this->addEntities(
+    ent->NewModelEntityGroupIterator(), entRef,
+    smtk::model::SUPERSET_OF, helper);
+  return numGroups;
 }
 
 int Session::findOrAddRelatedInstances(
@@ -1278,13 +1278,6 @@ void Session::addEntity(
   smtk::model::EntityRef childRef(
     parent.manager(),
     this->findOrSetEntityUUID(child));
-  std::cout
-    << "** Add " << parent.name() << " - " << NameForArrangementKind(k) << " - " << childRef.name()
-    << " s " << sense << " " << (orientation == smtk::model::POSITIVE ? "+" : "-") << "\n";
-  /*
-  if (!helper->isMarked(childRef))
-    this->transcribe(childRef, smtk::model::SESSION_EVERYTHING, false, -1);
-    */
   this->addEntityRecord(parent);
   this->addEntityRecord(childRef);
   this->findOrAddRelatedEntities(childRef, smtk::model::SESSION_EVERYTHING, helper);
@@ -1303,13 +1296,6 @@ void Session::addEntity(
   smtk::model::EntityRef parentRef(
     child.manager(),
     this->findOrSetEntityUUID(parent));
-  std::cout
-    << "** Add " << parentRef.name() << " - " << NameForArrangementKind(k) << " - " << child.name()
-    << " s " << sense << " " << (orientation == smtk::model::POSITIVE ? "+" : "-") << "\n";
-  /*
-  if (!helper->isMarked(childRef))
-    this->transcribe(childRef, smtk::model::SESSION_EVERYTHING, false, -1);
-    */
   this->addEntityRecord(parentRef);
   this->addEntityRecord(child);
   this->findOrAddRelatedEntities(parentRef, smtk::model::SESSION_EVERYTHING, helper);
