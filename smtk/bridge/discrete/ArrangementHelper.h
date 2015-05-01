@@ -53,7 +53,7 @@ public:
     smtk::model::Orientation orientation);
   void resetArrangements();
 
-  virtual void doneAddingEntities();
+  virtual void doneAddingEntities(smtk::model::SessionPtr baseSession);
 
   // Start of discrete-session specific methods:
   int findOrAssignSense(vtkModelEdgeUse* eu1);

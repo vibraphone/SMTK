@@ -123,6 +123,7 @@ protected:
   friend class CreateEdgesOperator;
   friend class WriteOperator;
   friend class RemoveModel;
+  friend class ArrangementHelper;
 
   Session();
 

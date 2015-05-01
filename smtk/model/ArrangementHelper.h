@@ -29,7 +29,7 @@ public:
   smtkTypeMacro(ArrangementHelper);
   virtual ~ArrangementHelper();
 
-  virtual void doneAddingEntities();
+  virtual void doneAddingEntities(SessionPtr sess);
 
   void mark(const EntityRef& ent, bool m);
   bool isMarked(const EntityRef& ent) const;

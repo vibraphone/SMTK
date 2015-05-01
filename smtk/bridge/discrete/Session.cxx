@@ -439,6 +439,7 @@ int Session::findOrAddCellAdjacencies(
   SessionInfoBits request,
   smtk::model::ArrangementHelper* hlp)
 {
+  std::cout << "  Adjacencies for cell (" << cell.flagSummary(0) << ", " << cell.name() << ")\n";
   ArrangementHelper* helper = dynamic_cast<ArrangementHelper*>(hlp);
   int numEnts = 0;
   vtkModelItem* modelCell = this->entityForUUID(cell.entity());
@@ -530,6 +531,7 @@ int Session::findOrAddCellUses(
   SessionInfoBits request,
   smtk::model::ArrangementHelper* hlp)
 {
+  std::cout << "  Uses for cell (" << cell.flagSummary(0) << ", " << cell.name() << ")\n";
   ArrangementHelper* helper = dynamic_cast<ArrangementHelper*>(hlp);
   int numEnts = 0;
   vtkModelItem* modelCell = this->entityForUUID(cell.entity());
@@ -624,6 +626,9 @@ int Session::findOrAddOwningCell(
       return 0;
 
     this->addEntity(cell, dscUse, smtk::model::HAS_USE, helper, sense, orientation);
+    // addEntity searches for relationships of dscUse, but we need to add the cell, not the use:
+    //this->addEntityRecord(cell, smtk::model::SESSION_EVERYTHING, helper);
+    this->findOrAddRelatedEntities(cell, smtk::model::SESSION_EVERYTHING, helper);
     }
   return 1;
 }
@@ -721,12 +726,140 @@ int Session::findOrAddShellAdjacencies(
   return numEnts;
 }
 
+static int FindParentFaceUse(
+  vtkModelLoopUse* dscLoop,
+  vtkModelFace* face,
+  vtkModelFaceUse*& faceUse,
+  int& useIndex,
+  int& loopIndex)
+{
+  if (!dscLoop || !face)
+    return 0;
+  for (int useIndex = 0; useIndex < 2; ++useIndex)
+    {
+    faceUse = face->GetModelFaceUse(useIndex);
+    if (!faceUse)
+      continue;
+    vtkModelItemIterator* loopIt = faceUse->NewLoopUseIterator();
+    loopIndex = 0;
+    for (loopIt->Begin(); !loopIt->IsAtEnd(); loopIt->Next(), ++loopIndex)
+      {
+      vtkModelLoopUse* loop = dynamic_cast<vtkModelLoopUse*>(loopIt->GetCurrentItem());
+      if (dscLoop == loop)
+        {
+        loopIt->Delete();
+        return 1;
+        }
+      }
+    loopIt->Delete();
+    }
+  return 0;
+}
+
 int Session::findOrAddUseAdjacencies(
   const smtk::model::ShellEntity& entRef,
   SessionInfoBits request,
-  smtk::model::ArrangementHelper* helper)
+  smtk::model::ArrangementHelper* hlp)
 {
-  return 0;
+  int numEnts = 0;
+  ArrangementHelper* helper = dynamic_cast<ArrangementHelper*>(hlp);
+  smtk::model::EntityRef parentUseOrShell;
+  vtkModelItem* dscEnt = this->entityForUUID(entRef.entity());
+  vtkModelShellUse* dscShell;
+  vtkModelLoopUse* dscLoop;
+  if (entRef.isShell() && (dscShell = dynamic_cast<vtkModelShellUse*>(dscEnt)))
+    {
+    vtkModelRegion* region = dscShell->GetModelRegion();
+    if (region)
+      {
+      // Add parent and children of shell.
+      // Note that the first shell is the only shell considered an outer shell.
+      // All others are considered internal (i.e., a single connected component per volume).
+      // Internal shells may not contain other shells (i.e., no islands within voids).
+      vtkModelItemIterator* shellIt = region->NewModelShellUseIterator();
+      shellIt->Begin();
+      if (dscShell == shellIt->GetCurrentItem())
+        { // Only add other shells if we are the outer shell
+        // Add parent volume-use of shell
+        smtk::model::VolumeUse parent(
+          entRef.manager(), helper->useForRegion(region));
+        this->addEntity(parent, dscShell, smtk::model::INCLUDES, helper);
+        ++numEnts;
+
+        for (/*nothing*/; !shellIt->IsAtEnd(); shellIt->Next(), ++numEnts)
+          {
+          vtkModelShellUse* subshell =
+            dynamic_cast<vtkModelShellUse*>(
+              shellIt->GetCurrentItem());
+          this->addEntity(entRef, subshell, smtk::model::INCLUDES, helper);
+          }
+        }
+      else
+        {
+        // This shell is the child of another shell; it has no child shells of its own.
+        smtk::model::Shell parent(
+          entRef.manager(), this->findOrSetEntityUUID(shellIt->GetCurrentItem()));
+        this->addEntity(parent, dscShell, smtk::model::INCLUDES, helper);
+        ++numEnts;
+        }
+      }
+    // Add child face-uses of shell
+    numEnts += this->addEntities(entRef, dscShell->NewModelFaceUseIterator(), smtk::model::HAS_USE, helper);
+    }
+  else if (entRef.isLoop() && (dscLoop = dynamic_cast<vtkModelLoopUse*>(dscEnt)))
+    {
+    vtkModelFace* face = dscLoop->GetModelFace();
+    if (face)
+      {
+      // Ugly. Loop only provides parent face, not face use. So we must search all loops of all uses of the face to find our parent.
+      vtkModelFaceUse* faceUse;
+      int useIndex; // 0 for negative face use, 1 for positive face use
+      int loopIndex;
+      if (FindParentFaceUse(dscLoop, face, faceUse, useIndex, loopIndex))
+        {
+        // Add parent and children of loop.
+        // Note that the first loop is the only loop considered an outer loop.
+        // All others are considered internal (i.e., a single connected component per volume).
+        // Internal loops may not contain other loops (i.e., no islands within voids).
+        if (dscLoop == faceUse->GetOuterLoopUse())
+          {
+          // Only add other loops if we are the outer loop
+          // Add parent volume-use of loop
+          smtk::model::FaceUse parent(
+            entRef.manager(), this->findOrSetEntityUUID(faceUse));
+          this->addEntity(parent, dscLoop, smtk::model::INCLUDES, helper);
+          ++numEnts;
+
+          vtkModelItemIterator* loopIt = faceUse->NewLoopUseIterator();
+          for (loopIt->Begin(); !loopIt->IsAtEnd(); loopIt->Next())
+            {
+            vtkModelLoopUse* subloop =
+              dynamic_cast<vtkModelLoopUse*>(
+                loopIt->GetCurrentItem());
+            if (subloop == dscLoop)
+              continue;
+
+            this->addEntity(entRef, subloop, smtk::model::INCLUDES, helper);
+            ++numEnts;
+            }
+          }
+        else
+          { // we are an inner loop use.
+          // This loop is the child of another loop; it has no child loops of its own.
+          smtk::model::Loop parent(
+            entRef.manager(), this->findOrSetEntityUUID(faceUse->GetOuterLoopUse()));
+          this->addEntity(parent, dscLoop, smtk::model::INCLUDES, helper);
+          ++numEnts;
+          }
+        }
+      }
+    // Add child edge-uses of loop
+    numEnts += this->addEntities(entRef, dscLoop->NewModelEdgeUseIterator(), smtk::model::HAS_USE, helper);
+    }
+  else if (entRef.isChain()) // && xxx)
+    {
+    }
+  return numEnts;
 }
 
 int Session::findOrAddGroupOwner(
@@ -829,6 +962,8 @@ SessionInfoBits Session::updateProperties(
   SessionInfoBits flags,
   smtk::model::ArrangementHelper* helper)
 {
+  smtk::model::EntityRef mutableRef(entRef);
+  this->addProperties(mutableRef, this->entityForUUID(entRef.entity()));
   return 0;
 }
 
@@ -1106,6 +1241,7 @@ void Session::addEntity(
   if (!helper->isMarked(childRef))
     this->transcribe(childRef, smtk::model::SESSION_EVERYTHING, false, -1);
     */
+  this->addEntityRecord(parent);
   this->addEntityRecord(childRef);
   this->findOrAddRelatedEntities(childRef, smtk::model::SESSION_EVERYTHING, helper);
   helper->addArrangement(parent, k, childRef, sense, orientation);
@@ -1131,6 +1267,7 @@ void Session::addEntity(
     this->transcribe(childRef, smtk::model::SESSION_EVERYTHING, false, -1);
     */
   this->addEntityRecord(parentRef);
+  this->addEntityRecord(child);
   this->findOrAddRelatedEntities(parentRef, smtk::model::SESSION_EVERYTHING, helper);
   helper->addArrangement(parentRef, k, child, sense, orientation);
 }

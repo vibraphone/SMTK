@@ -9,6 +9,8 @@
 //=========================================================================
 #include "smtk/bridge/discrete/ArrangementHelper.h"
 
+#include "smtk/bridge/discrete/Session.h"
+
 #include "smtk/model/ArrangementKind.h"
 #include "smtk/model/Manager.h"
 
@@ -65,8 +67,17 @@ void ArrangementHelper::resetArrangements()
 }
 
 /// This method is called after all related entities have been added and before arrangement updates are made.
-void ArrangementHelper::doneAddingEntities()
+void ArrangementHelper::doneAddingEntities(smtk::model::SessionPtr baseSession)
 {
+  // Finish processing visited entities
+  Session::Ptr sess = smtk::dynamic_pointer_cast<Session>(baseSession);
+  smtk::model::EntityRefs::const_iterator eit;
+  for (eit = this->m_marked.begin(); eit != this->m_marked.end(); ++eit)
+    {
+    smtk::model::EntityRef mutableRef(*eit);
+    sess->addProperties(mutableRef, sess->entityForUUID(eit->entity()));
+    }
+  // Add relations between visited entities
   std::set<Spec>::iterator it;
   for (it = this->m_arrangements.begin(); it != this->m_arrangements.end(); ++it)
     {
@@ -104,10 +115,15 @@ int ArrangementHelper::findOrAssignSense(vtkModelEdgeUse* eu1)
     this->m_edgeUseSenses[edge] = entry;
     return 0;
     }
-  int nextSense = eit->second.size() / 2;
-  eit->second[eu1] = nextSense;
-  eit->second[eu2] = nextSense;
-  return nextSense;
+  EdgeUseToSenseMap::iterator sit = eit->second.find(eu1);
+  if (sit == eit->second.end())
+    {
+    int nextSense = eit->second.size() / 2;
+    eit->second[eu1] = nextSense;
+    eit->second[eu2] = nextSense;
+    return nextSense;
+    }
+  return sit->second;
 }
 
 template<typename T>
