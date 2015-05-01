@@ -365,10 +365,18 @@ Entity* Session::addEntityRecord(const smtk::model::EntityRef& entRef)
     vtkModelFace* face = dynamic_cast<vtkModelFace*>(otherEntity);
     vtkModelEdge* edge = dynamic_cast<vtkModelEdge*>(otherEntity);
     vtkModelVertex* vert = dynamic_cast<vtkModelVertex*>(otherEntity);
-    if (region) entRef.manager()->addEntityOfTypeAndDimensionWithUUID(entRef.entity(), CELL_3D, 3);
-    else if (face) entRef.manager()->addEntityOfTypeAndDimensionWithUUID(entRef.entity(), CELL_2D, 2);
-    else if (edge) entRef.manager()->addEntityOfTypeAndDimensionWithUUID(entRef.entity(), CELL_1D, 1);
-    else if (vert) entRef.manager()->addEntityOfTypeAndDimensionWithUUID(entRef.entity(), CELL_0D, 0);
+    if (region)
+      entRef.manager()->addEntityOfTypeAndDimensionWithUUID(entRef.entity(), CELL_3D, 3);
+    else if (face)
+      {
+      entRef.manager()->addEntityOfTypeAndDimensionWithUUID(entRef.entity(), CELL_2D, 2);
+      // Now get rid of mandatory positive/negative uses since we overwrite those
+      entRef.manager()->clearArrangements(entRef.entity());
+      }
+    else if (edge)
+      entRef.manager()->addEntityOfTypeAndDimensionWithUUID(entRef.entity(), CELL_1D, 1);
+    else if (vert)
+      entRef.manager()->addEntityOfTypeAndDimensionWithUUID(entRef.entity(), CELL_0D, 0);
     else
       {
       smtkErrorMacro(this->log(),
