@@ -177,7 +177,10 @@ ArrangementKind Dual(EntityTypeBits entType, ArrangementKind k)
     case INSTANCE_ENTITY: return ArrangementKindDualInstance[k];
     case SESSION        : return ArrangementKindDualSession[k];
     default:
-      // Invalid... fall through
+      // Groups can have membership constraint bits set:
+      if (entType & GROUP_ENTITY)
+        return ArrangementKindDualGroup[k];
+      // Otherwise: Invalid... fall through
       break;
       }
     }
