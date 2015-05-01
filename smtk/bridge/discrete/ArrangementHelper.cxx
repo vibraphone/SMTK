@@ -69,7 +69,7 @@ void ArrangementHelper::resetArrangements()
 /// This method is called after all related entities have been added and before arrangement updates are made.
 void ArrangementHelper::doneAddingEntities(smtk::model::SessionPtr baseSession)
 {
-  // Finish processing visited entities
+  // I. Finish processing visited entities
   Session::Ptr sess = smtk::dynamic_pointer_cast<Session>(baseSession);
   smtk::model::EntityRefs::const_iterator eit;
   for (eit = this->m_marked.begin(); eit != this->m_marked.end(); ++eit)
@@ -81,15 +81,22 @@ void ArrangementHelper::doneAddingEntities(smtk::model::SessionPtr baseSession)
     if (dscGeom)
       sess->addTessellation(mutableRef, dscGeom);
     }
-  // Add relations between visited entities
+  // II. Add relations between visited entities
   std::set<Spec>::iterator it;
+  //     Track groups and the entities they own; we need to add
+  //     the group to the parent model. But we can only be guaranteed
+  //     to find the parent model after all the arrangements have been
+  //     processed. So, hold onto them in groupToMember.
+  std::map<smtk::model::EntityRef, smtk::model::EntityRef> groupToMember;
   for (it = this->m_arrangements.begin(); it != this->m_arrangements.end(); ++it)
     {
+    /*
     std::cout
       << "Add " << it->parent.flagSummary(0) << " (" << it->parent.name() << ")"
       << " " << smtk::model::NameForArrangementKind(it->kind)
       << " " << it->child.flagSummary(0) << " (" << it->child.name() << ")"
       << " sense " << it->sense << "\n";
+      */
     if (it->parent.manager() != it->child.manager())
       {
       std::cerr << "  Mismatched or nil managers. Skipping.\n";
@@ -99,7 +106,17 @@ void ArrangementHelper::doneAddingEntities(smtk::model::SessionPtr baseSession)
       it->kind,
       /* sense */ it->sense / 2,
       it->sense % 2 ? smtk::model::POSITIVE : smtk::model::NEGATIVE);
+    if (it->parent.isGroup())
+      groupToMember[it->parent] = it->child;
     }
+  // III. Find owning model for each group.
+  std::map<smtk::model::EntityRef, smtk::model::EntityRef>::iterator git;
+  smtk::model::Model owner;
+  for (git = groupToMember.begin(); git != groupToMember.end(); ++git)
+    if ((owner = git->second.owningModel()).isValid())
+      git->first.manager()->addDualArrangement(
+        owner.entity(), git->first.entity(), smtk::model::SUPERSET_OF,
+        -1, smtk::model::UNDEFINED);
 }
 
 int ArrangementHelper::findOrAssignSense(vtkModelEdgeUse* eu1)
