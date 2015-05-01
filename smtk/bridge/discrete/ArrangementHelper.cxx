@@ -75,7 +75,11 @@ void ArrangementHelper::doneAddingEntities(smtk::model::SessionPtr baseSession)
   for (eit = this->m_marked.begin(); eit != this->m_marked.end(); ++eit)
     {
     smtk::model::EntityRef mutableRef(*eit);
-    sess->addProperties(mutableRef, sess->entityForUUID(eit->entity()));
+    vtkModelItem* dscEntity = sess->entityForUUID(eit->entity());
+    vtkModelGeometricEntity* dscGeom = dynamic_cast<vtkModelGeometricEntity*>(dscEntity);
+    sess->addProperties(mutableRef, dscEntity);
+    if (dscGeom)
+      sess->addTessellation(mutableRef, dscGeom);
     }
   // Add relations between visited entities
   std::set<Spec>::iterator it;
