@@ -204,8 +204,11 @@ bool Manager::erase(const UUID& uid)
       if (ak == ad->second.end())
         break;
       Arrangements::size_type aidx = ak->second.size();
-      for (; aidx > 0; --aidx)
-        this->unarrangeEntity(uid, ak->first, static_cast<int>(aidx - 1), false);
+      if (aidx == 0)
+        ad->second.erase(ak);
+      else
+        for (; aidx > 0; --aidx)
+          this->unarrangeEntity(uid, ak->first, static_cast<int>(aidx - 1), false);
       ad = this->arrangements().find(uid); // iterator may be invalidated by unarrangeEntity.
       }
     while (ad != this->arrangements().end());
