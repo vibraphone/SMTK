@@ -700,7 +700,7 @@ int Session::findOrAddShellAdjacencies(
         {
         smtk::model::Shell parent(entRef.manager(), this->findOrSetEntityUUID(dscShell));
         this->addEntityRecord(parent);
-        this->addEntity(parent, dscFaceUse, smtk::model::INCLUDES, helper);
+        this->addEntity(parent, dscFaceUse, smtk::model::HAS_USE, helper);
         ++numEnts;
         }
 
@@ -708,7 +708,7 @@ int Session::findOrAddShellAdjacencies(
       vtkModelLoopUse* dscLoop = dscFaceUse->GetOuterLoopUse();
       if (dscLoop)
         {
-        this->addEntity(entRef, dscLoop, smtk::model::HAS_SHELL, helper);
+        this->addEntity(entRef, dscLoop, smtk::model::INCLUDES, helper);
         ++numEnts;
         }
       }
@@ -720,7 +720,7 @@ int Session::findOrAddShellAdjacencies(
         {
         smtk::model::Loop parent(entRef.manager(), this->findOrSetEntityUUID(dscLoop));
         this->addEntityRecord(parent);
-        this->addEntity(parent, dscEdgeUse, smtk::model::HAS_SHELL, helper);
+        this->addEntity(parent, dscEdgeUse, smtk::model::HAS_USE, helper);
         ++numEnts;
         }
 
@@ -746,7 +746,7 @@ int Session::findOrAddShellAdjacencies(
           entRef.manager(),
           helper->chainForEdgeUse(
             dynamic_cast<vtkModelEdgeUse*>(euit->GetCurrentItem())));
-        this->addEntity(chain, dscVertexUse, smtk::model::HAS_SHELL, helper);
+        this->addEntity(chain, dscVertexUse, smtk::model::HAS_USE, helper);
         }
       euit->Delete();
 
