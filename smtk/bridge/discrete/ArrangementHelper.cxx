@@ -39,7 +39,6 @@ void ArrangementHelper::addArrangement(
   smtk::model::ArrangementKind k,
   const smtk::model::EntityRef& child)
 {
-  // FIXME: if arrangement already exists, do not queue it.
   this->m_arrangements.insert(Spec(parent, child, k));
 }
 
@@ -50,7 +49,6 @@ void ArrangementHelper::addArrangement(
   int sense,
   smtk::model::Orientation orientation)
 {
-  // FIXME: if arrangement already exists, do not queue it.
   this->m_arrangements.insert(
     Spec(
       parent,
