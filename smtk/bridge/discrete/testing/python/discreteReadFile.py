@@ -80,7 +80,7 @@ class TestDiscreteSession(unittest.TestCase):
 
     if self.shouldSave:
       out = file('test.json', 'w')
-      print >>out, smtk.io.ExportJSON.fromModelManager(mgr)
+      print >>out, smtk.io.ExportJSON.fromModelManager(self.mgr)
       out.close()
 
 if __name__ == '__main__':
