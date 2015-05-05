@@ -165,8 +165,11 @@ public:
   EntityRef& addRawRelation(const EntityRef& ent);
   EntityRef& findOrAddRawRelation(const EntityRef& ent);
 
+
   const Tessellation* hasTessellation() const;
   bool removeTessellation(bool removeGen = false);
+  const Tessellation* hasAnalysisMesh() const;
+  const Tessellation* gotMesh() const; //prefers the analaysis over the display
 
   bool hasAttributes() const;
   bool hasAttribute(const smtk::common::UUID &attribId) const;

@@ -65,6 +65,7 @@ Manager::Manager() :
   m_integerData(new UUIDsToIntegerData),
   m_arrangements(new UUIDsToArrangements),
   m_tessellations(new UUIDsToTessellations),
+  m_analysisMesh(new UUIDsToTessellations),
   m_attributeAssignments(new UUIDsToAttributeAssignments),
   m_sessions(new UUIDsToSessions),
   m_attributeSystem(NULL),
@@ -78,6 +79,7 @@ Manager::Manager(
   shared_ptr<UUIDsToEntities> inTopology,
   shared_ptr<UUIDsToArrangements> inArrangements,
   shared_ptr<UUIDsToTessellations> tess,
+  shared_ptr<UUIDsToTessellations> mesh,
   shared_ptr<UUIDsToAttributeAssignments> attribs)
   :
     m_topology(inTopology),
@@ -86,6 +88,7 @@ Manager::Manager(
     m_integerData(new UUIDsToIntegerData),
     m_arrangements(inArrangements),
     m_tessellations(tess),
+    m_analysisMesh(mesh),
     m_attributeAssignments(attribs),
     m_sessions(new UUIDsToSessions),
     m_attributeSystem(NULL),
@@ -141,6 +144,16 @@ UUIDsToTessellations& Manager::tessellations()
 const UUIDsToTessellations& Manager::tessellations() const
 {
   return *this->m_tessellations.get();
+}
+
+UUIDsToTessellations& Manager::analysisMesh()
+{
+  return *this->m_analysisMesh.get();
+}
+
+const UUIDsToTessellations& Manager::analysisMesh() const
+{
+  return *this->m_analysisMesh.get();
 }
 
 UUIDsToAttributeAssignments& Manager::attributeAssignments()
