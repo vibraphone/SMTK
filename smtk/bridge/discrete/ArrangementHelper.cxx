@@ -39,7 +39,7 @@ void ArrangementHelper::addArrangement(
   smtk::model::ArrangementKind k,
   const smtk::model::EntityRef& child)
 {
-  this->m_arrangements.insert(Spec(parent, child, k));
+  this->addArrangement(parent, k, child, -1, smtk::model::UNDEFINED);
 }
 
 void ArrangementHelper::addArrangement(
@@ -49,6 +49,13 @@ void ArrangementHelper::addArrangement(
   int sense,
   smtk::model::Orientation orientation)
 {
+  /*
+  std::cout
+    << "##Add " << parent.name() << " -"
+    << smtk::model::NameForArrangementKind(k) << "- "
+    << child.name()
+    << " s " << sense << " o " << orientation << "\n";
+    */
   this->m_arrangements.insert(
     Spec(
       parent,

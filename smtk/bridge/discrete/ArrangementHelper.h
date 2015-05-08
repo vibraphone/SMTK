@@ -80,9 +80,9 @@ protected:
     int sense;
 
     Spec()
-      : kind(smtk::model::KINDS_OF_ARRANGEMENTS), sense(-1) { }
+      : kind(smtk::model::KINDS_OF_ARRANGEMENTS), sense(-2) { }
     Spec(const smtk::model::EntityRef& p, const smtk::model::EntityRef& c, smtk::model::ArrangementKind k)
-      : parent(p), child(c), kind(k), sense(-1) { }
+      : parent(p), child(c), kind(k), sense(-2) { }
     Spec(const smtk::model::EntityRef& p, const smtk::model::EntityRef& c, smtk::model::ArrangementKind k, int s)
       : parent(p), child(c), kind(k), sense(s) { }
 
