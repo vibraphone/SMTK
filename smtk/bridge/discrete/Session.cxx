@@ -393,9 +393,10 @@ Entity* Session::addEntityRecord(const smtk::model::EntityRef& entRef)
     vtkModelMaterial* material = dynamic_cast<vtkModelMaterial*>(otherEntity);
     vtkModelShellUse* shell = dynamic_cast<vtkModelShellUse*>(otherEntity);
     vtkModelLoopUse* loop = dynamic_cast<vtkModelLoopUse*>(otherEntity);
-    if (faceUse) entRef.manager()->addEntityOfTypeAndDimensionWithUUID(entRef.entity(), FACE_USE, 2);
-    else if (edgeUse) entRef.manager()->addEntityOfTypeAndDimensionWithUUID(entRef.entity(), EDGE_USE, 1);
-    else if (vertUse) entRef.manager()->addEntityOfTypeAndDimensionWithUUID(entRef.entity(), VERTEX_USE, 0);
+    bool isUse = false;
+    if (faceUse) { entRef.manager()->addEntityOfTypeAndDimensionWithUUID(entRef.entity(), FACE_USE, 2); isUse = true; }
+    else if (edgeUse) { entRef.manager()->addEntityOfTypeAndDimensionWithUUID(entRef.entity(), EDGE_USE, 1); isUse = true; }
+    else if (vertUse) { entRef.manager()->addEntityOfTypeAndDimensionWithUUID(entRef.entity(), VERTEX_USE, 0); isUse = true; }
     else if (group)
       {
       int groupFlags;
@@ -699,7 +700,6 @@ int Session::findOrAddShellAdjacencies(
       if (dscShell)
         {
         smtk::model::Shell parent(entRef.manager(), this->findOrSetEntityUUID(dscShell));
-        this->addEntityRecord(parent);
         this->addEntity(parent, dscFaceUse, smtk::model::HAS_USE, helper);
         ++numEnts;
         }
@@ -719,7 +719,6 @@ int Session::findOrAddShellAdjacencies(
       if (dscLoop)
         {
         smtk::model::Loop parent(entRef.manager(), this->findOrSetEntityUUID(dscLoop));
-        this->addEntityRecord(parent);
         this->addEntity(parent, dscEdgeUse, smtk::model::HAS_USE, helper);
         ++numEnts;
         }
@@ -742,10 +741,10 @@ int Session::findOrAddShellAdjacencies(
       vtkModelItemIterator* euit = dscVertexUse->NewModelEdgeUseIterator();
       for (euit->Begin(); !euit->IsAtEnd(); euit->Next(), ++numEnts)
         {
-        smtk::model::EntityRef chain(
-          entRef.manager(),
-          helper->chainForEdgeUse(
-            dynamic_cast<vtkModelEdgeUse*>(euit->GetCurrentItem())));
+        smtk::model::Chain chain =
+          entRef.manager()->insertChain(
+            helper->chainForEdgeUse(
+              dynamic_cast<vtkModelEdgeUse*>(euit->GetCurrentItem())));
         this->addEntity(chain, dscVertexUse, smtk::model::HAS_USE, helper);
         }
       euit->Delete();
@@ -1279,7 +1278,9 @@ void Session::addEntity(
     parent.manager(),
     this->findOrSetEntityUUID(child));
   this->addEntityRecord(parent);
+  if (parent.isUseEntity()) helper->reset(parent);
   this->addEntityRecord(childRef);
+  if (childRef.isUseEntity()) helper->reset(childRef);
   this->findOrAddRelatedEntities(childRef, smtk::model::SESSION_EVERYTHING, helper);
   helper->addArrangement(parent, k, childRef, sense, orientation);
 }
@@ -1297,7 +1298,9 @@ void Session::addEntity(
     child.manager(),
     this->findOrSetEntityUUID(parent));
   this->addEntityRecord(parentRef);
+  if (parentRef.isUseEntity()) helper->reset(parentRef);
   this->addEntityRecord(child);
+  if (child.isUseEntity()) helper->reset(child);
   this->findOrAddRelatedEntities(parentRef, smtk::model::SESSION_EVERYTHING, helper);
   helper->addArrangement(parentRef, k, child, sense, orientation);
 }
