@@ -448,6 +448,7 @@ int Session::findOrAddCellAdjacencies(
   SessionInfoBits request,
   smtk::model::ArrangementHelper* hlp)
 {
+  (void)request;
   ArrangementHelper* helper = dynamic_cast<ArrangementHelper*>(hlp);
   int numEnts = 0;
   vtkModelItem* modelCell = this->entityForUUID(cell.entity());
@@ -567,6 +568,7 @@ int Session::findOrAddCellUses(
   SessionInfoBits request,
   smtk::model::ArrangementHelper* hlp)
 {
+  (void)request;
   ArrangementHelper* helper = dynamic_cast<ArrangementHelper*>(hlp);
   int numEnts = 0;
   vtkModelItem* modelCell = this->entityForUUID(cell.entity());
@@ -612,6 +614,7 @@ int Session::findOrAddOwningCell(
   SessionInfoBits request,
   smtk::model::ArrangementHelper* hlp)
 {
+  (void)request;
   ArrangementHelper* helper = dynamic_cast<ArrangementHelper*>(hlp);
   smtk::model::EntityRef cell;
   if (entRef.isVolumeUse())
@@ -673,6 +676,7 @@ int Session::findOrAddShellAdjacencies(
   SessionInfoBits request,
   smtk::model::ArrangementHelper* hlp)
 {
+  (void)request;
   int numEnts = 0;
   ArrangementHelper* helper = dynamic_cast<ArrangementHelper*>(hlp);
   smtk::model::EntityRef cell;
@@ -687,8 +691,6 @@ int Session::findOrAddShellAdjacencies(
     }
   else
     {
-    int sense;
-    smtk::model::Orientation orientation;
     vtkModelItem* dscUse = this->entityForUUID(entRef.entity());
     vtkModelFaceUse* dscFaceUse = dynamic_cast<vtkModelFaceUse*>(dscUse);
     vtkModelEdgeUse* dscEdgeUse = dynamic_cast<vtkModelEdgeUse*>(dscUse);
@@ -751,12 +753,6 @@ int Session::findOrAddShellAdjacencies(
 
       // VertexUses have no child loops.
       }
-    else
-      {
-      sense = -1;
-      }
-    if (sense < 0)
-      return 0;
     }
   return numEnts;
 }
@@ -770,7 +766,7 @@ static int FindParentFaceUse(
 {
   if (!dscLoop || !face)
     return 0;
-  for (int useIndex = 0; useIndex < 2; ++useIndex)
+  for (useIndex = 0; useIndex < 2; ++useIndex)
     {
     faceUse = face->GetModelFaceUse(useIndex);
     if (!faceUse)
@@ -796,6 +792,7 @@ int Session::findOrAddUseAdjacencies(
   SessionInfoBits request,
   smtk::model::ArrangementHelper* hlp)
 {
+  (void)request;
   int numEnts = 0;
   ArrangementHelper* helper = dynamic_cast<ArrangementHelper*>(hlp);
   smtk::model::EntityRef parentUseOrShell;
@@ -908,6 +905,9 @@ int Session::findOrAddGroupOwner(
   SessionInfoBits request,
   smtk::model::ArrangementHelper* helper)
 {
+  (void)request;
+  (void)entRef;
+  (void)helper;
   return 0;
 }
 
@@ -916,27 +916,28 @@ int Session::findOrAddFreeCells(
   SessionInfoBits request,
   smtk::model::ArrangementHelper* hlp)
 {
+  (void)request;
   ArrangementHelper* helper = dynamic_cast<ArrangementHelper*>(hlp);
   int numEnts = 0;
   vtkModelItem* body = this->entityForUUID(entRef.entity());
   if (body->GetNumberOfAssociations(vtkModelRegionType))
     { // Add regions to model
-    this->addEntities(entRef, body->NewIterator(vtkModelRegionType), smtk::model::INCLUDES, helper);
+    numEnts += this->addEntities(entRef, body->NewIterator(vtkModelRegionType), smtk::model::INCLUDES, helper);
     }
   else if (body->GetNumberOfAssociations(vtkModelFaceType))
     { // Add faces to model
-    this->addEntities(entRef, body->NewIterator(vtkModelFaceType), smtk::model::INCLUDES, helper);
+    numEnts += this->addEntities(entRef, body->NewIterator(vtkModelFaceType), smtk::model::INCLUDES, helper);
     }
   else if (body->GetNumberOfAssociations(vtkModelEdgeType))
     { // Add edges to model
-    this->addEntities(entRef, body->NewIterator(vtkModelEdgeType), smtk::model::INCLUDES, helper);
+    numEnts += this->addEntities(entRef, body->NewIterator(vtkModelEdgeType), smtk::model::INCLUDES, helper);
     }
   else if (body->GetNumberOfAssociations(vtkModelVertexType))
     { // Add vertices to model
-    this->addEntities(entRef, body->NewIterator(vtkModelVertexType), smtk::model::INCLUDES, helper);
+    numEnts += this->addEntities(entRef, body->NewIterator(vtkModelVertexType), smtk::model::INCLUDES, helper);
     }
 
-  return 0;
+  return numEnts;
 }
 
 int Session::findOrAddRelatedModels(
@@ -944,6 +945,9 @@ int Session::findOrAddRelatedModels(
   SessionInfoBits request,
   smtk::model::ArrangementHelper* helper)
 {
+  (void)request;
+  (void)entRef;
+  (void)helper;
   // Discrete kernel does not allow models to contain models.
   return 0;
 }
@@ -953,6 +957,9 @@ int Session::findOrAddPrototype(
   SessionInfoBits request,
   smtk::model::ArrangementHelper* helper)
 {
+  (void)request;
+  (void)entRef;
+  (void)helper;
   return 0;
 }
 
@@ -961,6 +968,9 @@ int Session::findOrAddRelatedModels(
   SessionInfoBits request,
   smtk::model::ArrangementHelper* helper)
 {
+  (void)request;
+  (void)entRef;
+  (void)helper;
   return 0;
 }
 
@@ -969,6 +979,7 @@ int Session::findOrAddRelatedGroups(
   SessionInfoBits request,
   smtk::model::ArrangementHelper* hlp)
 {
+  (void)request;
   ArrangementHelper* helper = dynamic_cast<ArrangementHelper*>(hlp);
   vtkDiscreteModelEntity* ent =
     dynamic_cast<vtkDiscreteModelEntity*>(
@@ -987,6 +998,9 @@ int Session::findOrAddRelatedInstances(
   SessionInfoBits request,
   smtk::model::ArrangementHelper* helper)
 {
+  (void)request;
+  (void)entRef;
+  (void)helper;
   return 0;
 }
 
@@ -996,6 +1010,10 @@ smtk::model::SessionInfoBits Session::findOrAddArrangements(
   SessionInfoBits flags,
   smtk::model::ArrangementHelper* helper)
 {
+  (void)entRef;
+  (void)entRec;
+  (void)flags;
+  (void)helper;
   return 0;
 }
 
@@ -1019,6 +1037,8 @@ SessionInfoBits Session::updateTessellation(
   SessionInfoBits flags,
   smtk::model::ArrangementHelper* helper)
 {
+  (void)flags;
+  (void)helper;
   // TODO: Test and/or Add generation number property to indicate last time
   //       tessellation was generated relative to vtkModelItem...
   if (flags & smtk::model::SESSION_TESSELLATION)
@@ -1526,6 +1546,10 @@ bool Session::addProperties(
       if (uname)
         cellOut.setName(uname);
       }
+    }
+  if (cellOut.isModel())
+    {
+    cellOut.setIntegerProperty(SMTK_GEOM_STYLE_PROP, smtk::model::DISCRETE);
     }
   return hasProps;
 }

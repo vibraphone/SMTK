@@ -41,11 +41,6 @@
 
 //#include <boost/variant.hpp>
 
-// The name of the integer property used to store Tessellation generation numbers.
-// Starting with "_" indicates internal-use-only.
-// Short (8 bytes or less) means single word comparison suffices on many platforms => fast.
-#define SMTK_TESS_GEN_PROP "_tessgen"
-
 using namespace std;
 using namespace smtk::common;
 
@@ -183,70 +178,115 @@ const UUIDsToAttributeAssignments& Manager::attributeAssignments() const
   * boundary). The application is expected to perform further
   * operations to keep the model valid.
   */
-bool Manager::erase(const UUID& uid)
+SessionInfoBits Manager::erase(const UUID& uid, SessionInfoBits flags)
 {
-  UUIDWithEntity ent = this->m_topology->find(uid);
-  if (ent == this->m_topology->end())
-    return false;
+  SessionInfoBits actual = flags;
+  if (flags & SESSION_ENTITY_RELATIONS)
+    actual |= SESSION_ARRANGEMENTS;
 
-  // Trigger an event before the erasure so the observers
-  // have a chance to see what's about to disappear.
-  this->trigger(std::make_pair(DEL_EVENT, ENTITY_ENTRY),
-    EntityRef(this->shared_from_this(), uid));
-
-  UUIDWithArrangementDictionary ad = this->arrangements().find(uid);
-  if (ad != this->arrangements().end())
+  UUIDWithEntity ent;
+  bool haveEnt = false;
+  if (actual & (SESSION_ENTITY_TYPE | SESSION_ENTITY_RELATIONS))
     {
-    ArrangementKindWithArrangements ak;
-    do
+    ent = this->m_topology->find(uid);
+    if (ent != this->m_topology->end())
       {
-      ak = ad->second.begin();
-      if (ak == ad->second.end())
-        break;
-      Arrangements::size_type aidx = ak->second.size();
-      if (aidx == 0)
-        ad->second.erase(ak);
-      else
-        for (; aidx > 0; --aidx)
-          this->unarrangeEntity(uid, ak->first, static_cast<int>(aidx - 1), false);
-      ad = this->arrangements().find(uid); // iterator may be invalidated by unarrangeEntity.
+      haveEnt = true;
+      if (flags & SESSION_ENTITY_TYPE)
+        {
+        // Trigger an event before the erasure so the observers
+        // have a chance to see what's about to disappear.
+        this->trigger(std::make_pair(DEL_EVENT, ENTITY_ENTRY),
+          EntityRef(this->shared_from_this(), uid));
+        }
       }
-    while (ad != this->arrangements().end());
+    else
+      { // without an Entity record, we cannot erase these things:
+      actual &= ~(SESSION_ENTITY_TYPE | SESSION_ENTITY_RELATIONS);
+      }
     }
-  this->tessellations().erase(uid);
-  this->attributeAssignments().erase(uid);
+
+  if (flags & SESSION_ARRANGEMENTS)
+    {
+    UUIDWithArrangementDictionary ad = this->arrangements().find(uid);
+    if (ad != this->arrangements().end())
+      {
+      ArrangementKindWithArrangements ak;
+      do
+        {
+        ak = ad->second.begin();
+        if (ak == ad->second.end())
+          break;
+        Arrangements::size_type aidx = ak->second.size();
+        if (aidx == 0)
+          ad->second.erase(ak);
+        else
+          for (; aidx > 0; --aidx)
+            this->unarrangeEntity(uid, ak->first, static_cast<int>(aidx - 1), false);
+        ad = this->arrangements().find(uid); // iterator may be invalidated by unarrangeEntity.
+        }
+      while (ad != this->arrangements().end());
+      }
+    }
+
+  if (actual & SESSION_TESSELLATION)
+    this->tessellations().erase(uid);
+
+  if (actual & SESSION_ATTRIBUTE_ASSOCIATIONS)
+    this->attributeAssignments().erase(uid);
 
   // TODO: If this entity is a model and has parents, we should make
-  //       the parent own the child models?
+  //       the parent own the child models? Erase the children? Leave
+  //       the children as orphans?
 
-  // Before removing the entity, loop through its relations and
-  // make sure none of them retain any references back to \a uid.
-  // However, we cannot erase entries in relatedEntity->relations()
-  // because relatedEntity's arrangements reference them by integer
-  // index. Thus, we call elideEntityReferences rather than removeEntityReferences.
-  this->elideEntityReferences(ent);
+  if (haveEnt)
+    {
+    // Before removing the entity, loop through its relations and
+    // make sure none of them retain any references back to \a uid.
+    // However, we cannot erase entries in relatedEntity->relations()
+    // because relatedEntity's arrangements reference them by integer
+    // index. Thus, we call elideEntityReferences rather than removeEntityReferences.
+    this->elideEntityReferences(ent);
+    }
 
   // TODO: Notify observers of property removal?
-  this->m_floatData->erase(uid);
-  this->m_stringData->erase(uid);
-  this->m_integerData->erase(uid);
+  if (actual & SESSION_USER_DEFINED_PROPERTIES)
+    {
+    if (actual & SESSION_FLOAT_PROPERTIES)
+      this->m_floatData->erase(uid);
+    if (actual & SESSION_STRING_PROPERTIES)
+      this->m_stringData->erase(uid);
+    if (actual & SESSION_INTEGER_PROPERTIES)
+      this->m_integerData->erase(uid);
+    }
+  else if (actual & SESSION_PROPERTIES)
+    {
+    Model owningModel(shared_from_this(), this->modelOwningEntity(uid));
+    SessionRef sref = owningModel.session();
+    if (sref.session())
+      sref.session()->removeGeneratedProperties(
+        EntityRef(shared_from_this(), uid), actual);
+    }
 
-  // TODO: Notify model of entity removal?
-  //       Note this can be complicated because removal
-  //       of entities in the class destructor prevent us
-  //       from obtaining a shared pointer to the manager
-  //       to pass to any observers...
-  this->m_topology->erase(uid);
+  if (haveEnt)
+    {
+    // TODO: Notify model of entity removal?
+    //       Note this can be complicated because removal
+    //       of entities in the class destructor prevent us
+    //       from obtaining a shared pointer to the manager
+    //       to pass to any observers...
+    this->m_topology->erase(uid);
+    }
 
-  return true;
+  return actual;
 }
 
 /**\brief A convenience method for erasing an entity from storage.
   *
   */
-bool Manager::erase(const EntityRef& entityref)
+SessionInfoBits Manager::erase(const EntityRef& entityref, SessionInfoBits flags)
 {
-  return this->Manager::erase(entityref.entity());
+  return this->Manager::erase(entityref.entity(), flags);
 }
 
 /**\brief A convenience method for erasing a model and its children.
@@ -255,10 +295,10 @@ bool Manager::erase(const EntityRef& entityref)
   * submodels from storage.
   * This method will have no effect given an invalid model entity.
   */
-bool Manager::eraseModel(const Model& model)
+SessionInfoBits Manager::eraseModel(const Model& model, SessionInfoBits flags)
 {
   if (!model.isValid())
-    return false;
+    return SESSION_NOTHING;
 
   CellEntities free = model.cells();
   for (CellEntities::iterator fit = free.begin(); fit != free.end(); ++fit)
@@ -395,7 +435,11 @@ Manager::iter_type Manager::setEntityOfTypeAndDimension(const UUID& uid, BitFlag
     msg << "Nil UUID";
     throw msg.str();
     }
-  if ((it = this->m_topology->find(uid)) != this->m_topology->end() && it->second.dimension() != dim)
+  if (
+    ((it = this->m_topology->find(uid)) != this->m_topology->end()) &&
+    (entityFlags & GROUP_ENTITY) != 0 &&
+    dim >= 0 &&
+    it->second.dimension() != dim)
     {
     std::ostringstream msg;
     msg << "Duplicate UUID '" << uid << "' of different dimension " << it->second.dimension() << " != " << dim;
@@ -1827,31 +1871,54 @@ EntityRefArray Manager::findEntitiesOfType(BitFlags flags, bool exactMatch)
 
 /**\brief Set the tessellation information for a given \a cellId.
   *
+  * If \a analysis is non-zero (zero is the default), then the
+  * Tessellation is treated as an analysis mesh, not a display
+  * tessellation.
+  *
   * Note that calling this method automatically sets or increments
   * the integer-valued "_tessgen" property on \a cellId.
   * This property enables fast display updates when only a few
   * entity tessellations have changed.
+  * If \a generation is a non-NULL pointer (NULL is the default),
+  * then the new generation number of the Tessellation is stored at
+  * the address provided.
   */
-Manager::tess_iter_type Manager::setTessellation(const UUID& cellId, const Tessellation& geom)
+Manager::tess_iter_type Manager::setTessellation(
+  const UUID& cellId, const Tessellation& geom, int analysis, int* generation)
 {
   if (cellId.isNull())
     throw std::string("Nil cell ID");
 
-  tess_iter_type result = this->m_tessellations->find(cellId);
-  if (result == this->m_tessellations->end())
+  smtk::shared_ptr<UUIDsToTessellations> storage;
+  const char* genProp;
+  if (!analysis)
+    { // store as display tessellation
+    storage = this->m_tessellations;
+    genProp = SMTK_TESS_GEN_PROP;
+    }
+  else
+    { // store as analysis mesh
+    storage = this->m_analysisMesh;
+    genProp = SMTK_MESH_GEN_PROP;
+    }
+
+  tess_iter_type result = storage->find(cellId);
+  if (result == storage->end())
     {
     std::pair<UUID,Tessellation> blank;
     blank.first = cellId;
-    result = this->m_tessellations->insert(blank).first;
+    result = storage->insert(blank).first;
     }
   result->second = geom;
 
   // Now set or increment the generation number.
-  IntegerList& gen(this->integerProperty(cellId, SMTK_TESS_GEN_PROP));
+  IntegerList& gen(this->integerProperty(cellId, genProp));
   if (gen.empty())
     gen.push_back(0);
   else
     ++gen[0];
+  if (generation)
+    *generation = gen[0];
 
   return result;
 }
