@@ -321,6 +321,7 @@ public:
   virtual std::string name() const;
   virtual std::string className() const { return Session::staticClassName(); }
   smtk::common::UUID sessionId() const;
+  SessionRef ref() const;
 
   int transcribe(const EntityRef& entity, SessionInfoBits flags, bool onlyDangling = true, int depth = -1);
 

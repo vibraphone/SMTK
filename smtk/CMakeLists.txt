@@ -118,6 +118,7 @@ if(SMTK_ENABLE_PYTHON_WRAPPING AND Shiboken_FOUND)
     __init__
     simple
     testing
+    log
   )
   set(SMTK_PYTHON_MODULEFILES)
   foreach(pyfile ${SMTK_PYTHON_MODULE_SRCS})
