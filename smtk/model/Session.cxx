@@ -76,6 +76,19 @@ smtk::common::UUID Session::sessionId() const
   return this->m_sessionId;
 }
 
+/**\brief Return an EntityRef reference for this instance of the session.
+  *
+  * Sessions exist in the model manager just as edges, faces, and models
+  * and can thus be referenced by an EntityRef. This method returns an
+  * instance of SessionRef (a subclass of EntityRef) that refers back to
+  * this session by its UUID and the model manager to which this session
+  * is associated.
+  */
+SessionRef Session::ref() const
+{
+  return SessionRef(this->manager(), this->m_sessionId);
+}
+
 /**\brief Transcribe an entity from a foreign modeler into an SMTK storage Manager.
   *
   * On input, the \a entity will not be valid but if transcription is
