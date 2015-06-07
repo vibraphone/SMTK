@@ -1,3 +1,6 @@
+# Encode definitions for operator hints as a string for use in OperatorLog.cxx:
+smtk_operator_xml("${CMAKE_CURRENT_SOURCE_DIR}/OperatorLogHints.sbt" ioLogHintXML)
+
 # set up sources to build
 set(ioSrcs
   AttributeReader.cxx
@@ -28,7 +31,7 @@ set(ioHeaders
   XmlV2StringWriter.h
 )
 
-#install the headers
+# Install the headers:
 smtk_public_headers(${ioHeaders})
 
 if (SMTK_ENABLE_TESTING)
