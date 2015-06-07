@@ -9,8 +9,15 @@
 //=========================================================================
 
 #include "smtk/io/OperatorLog.h"
+
+#include "smtk/io/AttributeReader.h"
+#include "smtk/io/Logger.h"
+
 #include "smtk/model/Operator.h"
+
+#include "smtk/attribute/Attribute.h"
 #include "smtk/attribute/IntItem.h"
+#include "smtk/attribute/System.h"
 
 using namespace smtk::model;
 
@@ -41,14 +48,82 @@ OperatorLog::~OperatorLog()
     }
 }
 
+/// Return whether any operator has failed since the last call to resetFailures().
 bool OperatorLog::hasFailures() const
 {
   return this->m_hasFailures;
 }
 
+/// Tell the log that previous failures have been handled by the application.
 void OperatorLog::resetFailures()
 {
   this->m_hasFailures = false;
+}
+
+/**\brief Return the attribute system that holds hints for operator items.
+  *
+  * If no attribute system exists, one is created by calling prepareHintSystem().
+  */
+smtk::attribute::SystemPtr OperatorLog::hintSystem()
+{
+  if (!this->m_hintSys)
+    this->prepareHintSystem();
+  return this->m_hintSys;
+}
+
+smtk::attribute::AttributePtr OperatorLog::createHint(const std::string& hintDef)
+{
+  return this->hintSystem()->createAttribute(hintDef);
+}
+
+void OperatorLog::setHintForItem(const std::string& itemPath, smtk::attribute::AttributePtr att)
+{
+  this->m_hints[itemPath] = att;
+}
+
+smtk::attribute::AttributePtr OperatorLog::hintForItem(const std::string& itemPath) const
+{
+  HintMap::const_iterator it = this->m_hints.find(itemPath);
+  if (it != this->m_hints.end())
+    return it->second;
+  return smtk::attribute::AttributePtr();
+}
+
+void OperatorLog::resetHint(const std::string& itemPath)
+{
+  this->m_hints.erase(itemPath);
+}
+
+void OperatorLog::resetHints()
+{
+  this->m_hints.clear();
+}
+
+#include "smtk/io/OperatorLogHints_xml.h"
+
+/**\brief Create an attribute system to hold hints and add definitions.
+  *
+  * Subclasses may override this method to change the base definitions
+  * so they match the type of log being prepared.
+  */
+void OperatorLog::prepareHintSystem()
+{
+  this->m_hintSys = smtk::attribute::SystemPtr(new smtk::attribute::System);
+
+  // Now read definitions into the system from a string.
+  smtk::io::Logger tmpLog;
+  smtk::io::AttributeReader rdr;
+  bool ok = !rdr.readContents(
+    *this->m_hintSys.get(),
+    OperatorLogHints_xml, strlen(OperatorLogHints_xml),
+    tmpLog);
+  if (!ok)
+    {
+    std::cerr
+      << "Error initializing hint system. Log follows:\n---\n"
+      << tmpLog.convertToString()
+      << "\n---\n";
+    }
 }
 
 int OperatorLog::operatorCreated(
