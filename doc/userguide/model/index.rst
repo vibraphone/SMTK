@@ -15,3 +15,4 @@ that may each interact with different solid modeling kernels.
    sessions.rst
    property-names.rst
    user-interface.rst
+   logging.rst
