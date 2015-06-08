@@ -19,6 +19,8 @@
 #include "smtk/attribute/IntItem.h"
 #include "smtk/attribute/System.h"
 
+#include "boost/algorithm/string.hpp"
+
 using namespace smtk::model;
 
 namespace smtk {
@@ -76,22 +78,50 @@ smtk::attribute::AttributePtr OperatorLog::createHint(const std::string& hintDef
   return this->hintSystem()->createAttribute(hintDef);
 }
 
-void OperatorLog::setHintForItem(const std::string& itemPath, smtk::attribute::AttributePtr att)
+void OperatorLog::addHintForItem(const std::string& itemPath, smtk::attribute::AttributePtr hint, const std::string& sep)
 {
-  this->m_hints[itemPath] = att;
+  smtk::model::StringList separatedPath;
+  boost::split(separatedPath, itemPath, boost::is_any_of(sep));
+  this->addHintForItem(separatedPath, hint);
 }
 
-smtk::attribute::AttributePtr OperatorLog::hintForItem(const std::string& itemPath) const
+void OperatorLog::addHintForItem(const StringList& itemPath, smtk::attribute::AttributePtr hint)
 {
-  HintMap::const_iterator it = this->m_hints.find(itemPath);
+  HintedItem key;
+  key.Operator = "foo";
+  key.Path = itemPath;
+  this->m_hints[key].insert(hint);
+}
+
+std::set<smtk::attribute::AttributePtr> OperatorLog::hintsForItem(const std::string& itemPath, const std::string& sep) const
+{
+  smtk::model::StringList separatedPath;
+  boost::split(separatedPath, itemPath, boost::is_any_of(sep));
+  return this->hintsForItem(separatedPath);
+}
+
+std::set<smtk::attribute::AttributePtr> OperatorLog::hintsForItem(const smtk::model::StringList& itemPath) const
+{
+  HintedItem key;
+  key.Path = itemPath;
+  HintMap::const_iterator it = this->m_hints.find(key);
   if (it != this->m_hints.end())
     return it->second;
-  return smtk::attribute::AttributePtr();
+  return std::set<smtk::attribute::AttributePtr>();
 }
 
-void OperatorLog::resetHint(const std::string& itemPath)
+void OperatorLog::resetHint(const std::string& itemPath, const std::string& sep)
 {
-  this->m_hints.erase(itemPath);
+  smtk::model::StringList separatedPath;
+  boost::split(separatedPath, itemPath, boost::is_any_of(sep));
+  this->resetHint(separatedPath);
+}
+
+void OperatorLog::resetHint(const smtk::model::StringList& itemPath)
+{
+  HintedItem key;
+  key.Path = itemPath;
+  this->m_hints.erase(key);
 }
 
 void OperatorLog::resetHints()

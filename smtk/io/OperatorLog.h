@@ -15,6 +15,7 @@
 #include "smtk/SystemConfig.h"
 #include "smtk/PublicPointerDefs.h"
 #include "smtk/model/Events.h"
+#include "smtk/model/StringData.h"
 
 namespace smtk {
   namespace io {
@@ -71,9 +72,12 @@ public:
 
   smtk::attribute::SystemPtr hintSystem();
   smtk::attribute::AttributePtr createHint(const std::string& hintDef);
-  void setHintForItem(const std::string& itemPath, smtk::attribute::AttributePtr);
-  smtk::attribute::AttributePtr hintForItem(const std::string& itemPath) const;
-  void resetHint(const std::string& itemPath);
+  void addHintForItem(const std::string& itemPath, smtk::attribute::AttributePtr, const std::string& sep = "/");
+  void addHintForItem(const smtk::model::StringList& itemPath, smtk::attribute::AttributePtr);
+  std::set<smtk::attribute::AttributePtr> hintsForItem(const std::string& itemPath, const std::string& sep = "/") const;
+  std::set<smtk::attribute::AttributePtr> hintsForItem(const smtk::model::StringList& itemPath) const;
+  void resetHint(const std::string& itemPath, const std::string& sep = "/");
+  void resetHint(const smtk::model::StringList& itemPath);
   void resetHints();
 
 protected:
@@ -114,8 +118,21 @@ protected:
     smtk::model::OperatorResult r,
     void* user);
 
+  struct HintedItem
+    {
+    std::string Operator;
+    smtk::model::StringList Path;
+
+    bool operator < (const HintedItem& other) const
+      {
+      return (
+        (this->Operator < other.Operator) ||
+        (this->Operator == other.Operator && this->Path < other.Path)) ?
+        true : false;
+      }
+    };
   typedef std::vector<smtk::model::WeakOperatorPtr> WeakOpArray;
-  typedef std::map<std::string, smtk::attribute::AttributePtr> HintMap;
+  typedef std::map<HintedItem, std::set<smtk::attribute::AttributePtr> > HintMap;
 
   bool m_hasFailures;
   smtk::model::WeakManagerPtr m_manager;
