@@ -26,6 +26,22 @@ class TestPythonOperatorLog(smtk.testing.TestCase):
         sref.assignDefaultName()
         SetActiveSession(sref)
 
+    def recordHint(self, result, group, entry, item, index, target):
+        """Create a "previous-result" hint and associate it with an item's value(s).
+
+        where
+          result    is an integer index specifying which result contains the value of interest.
+          group     names the item of the result containing the value of interest.
+          entry     is an integer index into the result group containing the value of interest.
+          item      is an smtk attribute item to hold the value of interest
+          target    specifies where in the item's vector of values the prior result should be placed.
+        """
+        hint = self.recorder.createHint('previous-result')
+        SetVectorValue(hint.findInt('result index'), [result,])
+        SetVectorValue(hint.findInt('result group'), [group,])
+        SetVectorValue(hint.findInt('entries'), [entry,])
+        self.recorder.setHint(item, index, hint)
+
     def testSolidModelingOps(self):
         # Create a recorder.
         # It will immediately start logging all operations on the manager
@@ -37,6 +53,8 @@ class TestPythonOperatorLog(smtk.testing.TestCase):
         sph2 = CreateSphere(radius=0.5, center=[0.9, 0., 0.])
 
         # Note that su should have same UUID as sph2:
+        self.recordHint(result=-2, group='created', entry=0, item=-1, index=0)
+        self.recordHint(result=-1, group='created', entry=0, item=-1, index=1)
         su = Union([sph, sph2])
 
         # Create a cylinder:
