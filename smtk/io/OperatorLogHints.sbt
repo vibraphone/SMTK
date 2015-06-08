@@ -8,6 +8,35 @@
       </BriefDescription>
     </AttDef>
 
+    <AttDef Type="previous-result" BaseType="hint">
+      <ItemDefinitions>
+        <Int Name="result index" NumberOfRequiredValues="1">
+          <DefaultValue>-1</DefaultValue>
+          <BriefDescription>
+            The index of the operator result holding the value we wish to use.
+            Items are ordered starting at 0 for the first operation and increasing
+            from there, but negative numbers may be used to indicate counting
+            backwards from the most recent result (-1).
+            The index is across all operations being logged (i.e., all operations
+            on a given model manager).
+          </BriefDescription>
+        </Int>
+        <String Name="result group" NumberOfRequiredValues="1">
+          <BriefDescription>
+            The name of the attribute item holding the value we wish to reuse.
+            Usually this will be either "created" or "modified."
+          </BriefDescription>
+        </String>
+        <Int Name="entries" Optional="true" Extensible="true">
+          <BriefDescription>
+            The indices of the value(s) to pick from the item named by "result group".
+            Items are ordered starting at 0.
+            If unspecified, the entire list named by "result group" is used.
+          </BriefDescription>
+        </Int>
+      </ItemDefinitions>
+    </AttDef>
+
     <AttDef Type="find-by-name" BaseType="hint">
       <ItemDefinitions>
         <String Name="name" NumberOfRequiredValues="1" Extensible="true">
