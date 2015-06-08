@@ -50,12 +50,44 @@ class PythonOperatorLog(smtk.io.OperatorLog):
         #return self.var_regex.sub(r'_\1', compacted).lower()
         return compacted.encode('string-escape')
 
+    def valueFormatter(self, val):
+      """Given an attribute item's value, return a formatted version that is appropriate for logging.
+
+      This does nothing to string, int, or floating-point values.
+      It returns UUIDs for geometric model entities.
+      """
+      if hasattr(val, 'entity'):
+        return val.entity()
+      return val
+
     def attribItemDiff(self, itm, ivar, depth = 0):
-        """Return statements to set an item to match the non-default values of the given item."""
+        """Return statements to set an item to match the non-default values of the given item.
+
+        itm    is a pointer to the concrete attribute we must reproduce.
+        ivar   is a string holding the name of the variable we must set to match itm.
+        depth  is how far down the tree of item children we have descended.
+        """
         stmt = []
-        if not itm.isUsingDefault():
-            stmt.append('SetVectorValue({ivar}, {val})'.format(
-                ivar=ivar, val=str([itm.value(i) for i in range(itm.numberOfValues())])))
+        # I. If the item's value(s) are not default, set them.
+        if not hasattr(itm, 'isUsingDefault') or not itm.isUsingDefault():
+            # I.a. If the item is optional, enable it.
+            #      NB. SetVectorValue also enables as required... perhaps we should only
+            #          do this for discrete items or make it part of the smtk.simple API?
+            if itm.isOptional() :
+                stmt.append('{ivar}.setEnabled({ena})'.format(
+                  ivar=ivar, ena=True if itm.isEnabled() else False))
+            # I.b. Set either the discrete index (if an enum) or the actual value.
+            if hasattr(itm, 'isDiscrete') and itm.isDiscrete():
+                stmt.append('{ivar}.setDiscreteIndex({val})'.format(
+                    ivar=ivar, val=imt.discreteIndex()))
+            else:
+                stmt.append('SetVectorValue({ivar}, {val})'.format(
+                    ivar=ivar, val=str([self.valueFormatter(itm.value(i)) for i in range(itm.numberOfValues())])))
+
+        # ... TODO: How should we deal with user data? Scripts cannot rely on the pointer
+        #           being constant across sessions but UserData has no serialization method.
+
+        # II. Visit children recursively
         if hasattr(itm, 'childrenItems'):
             itmVarName = 'item{dp}'.format(dp=depth)
             cstmt = []
@@ -73,6 +105,9 @@ class PythonOperatorLog(smtk.io.OperatorLog):
         """Return statements to set an attribute to match the non-default values of the given attribute."""
         #sys = a1.system()
         istmt = []
+        if a1.associations() and a1.associations().numberOfValues() > 0:
+            istmt += ['assoc = {var}.associations()'.format(var=varName),]
+            istmt += self.attribItemDiff(a1.associations(), 'assoc')
         for itm in [smtk.attribute.to_concrete(a1.item(i)) for i in range(a1.numberOfItems())]:
             tmp = [
                 'item0 = smtk.attribute.to_concrete({var}.find(\'{iname}\'))'.format(
@@ -103,6 +138,9 @@ class PythonOperatorLog(smtk.io.OperatorLog):
         print self.active[-1]
         return 0
 
+    def entityVector(self, itm):
+      return [self.valueFormatter(itm.value(i)) for i in range(itm.numberOfValues())]
+
     def recordResult(self, evt, op, res):
         """Called when an operator provides its results."""
         print 'Record Result ({n})'.format(n=len(self.history)+1)
@@ -112,7 +150,12 @@ class PythonOperatorLog(smtk.io.OperatorLog):
             self.history.append({
                 'name':self.active[-1][0],
                 'session':self.active[-1][1],
-                'statements':self.active[-1][2]})# + [outcome,])
+                'statements':self.active[-1][2],
+                'outcome':outcome,
+                'created':self.entityVector(res.findModelEntity('created')),
+                'expunged':self.entityVector(res.findModelEntity('expunged')),
+                'modified':self.entityVector(res.findModelEntity('modified')),
+            })# + [outcome,])
             self.active = self.active[:-1]
         else:
             self.history.append({'name':self.active[-1][0], 'statements':'***ERROR***'})
