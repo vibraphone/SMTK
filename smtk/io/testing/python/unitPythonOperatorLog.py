@@ -63,6 +63,10 @@ class TestPythonOperatorLog(smtk.testing.TestCase):
         for op in history:
           print '# Operator {op}'.format(op=op['name'])
           print '\n'.join(op['statements'])
+          print '\n# outcome {oc}'.format(oc=op['outcome'])
+          print '# created ', '\n# created '.join([str(x) for x in op['created']])
+          print '# expunged ', '\n# expunged '.join([str(x) for x in op['expunged']])
+          print '# modified ', '\n# modified '.join([str(x) for x in op['modified']])
           print ''
 
         # Create a new manager
