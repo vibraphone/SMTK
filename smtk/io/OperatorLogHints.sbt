@@ -2,13 +2,42 @@
 <!-- Definitions of hints for how to log model operator items -->
 <SMTK_AttributeSystem Version="2">
   <Definitions>
-    <AttDef Type="hint">
+    <AttDef Type="log hint">
       <BriefDescription>
         The base definition for all hints.
       </BriefDescription>
+      <ItemDefinitions>
+        <String Name="context" NumberOfRequiredValues="1">
+          <BriefDescription>
+            An application-assigned name identifying the attribute or
+            context we wish to provide hints for.
+            This is not the source of the hints, but the attribute(s)
+            being hinted.
+            Definitions that inherit "log hint" provide a way to specify
+            the hint itself while this base definition provides a
+            common way for applications to determine which items a hint
+            might apply to.
+          </BriefDescription>
+        </String>
+        <String Name="item name" NumberOfRequiredValues="1" Extensible="true">
+          <BriefDescription>
+            The name of the attribute item holding the value we wish to hint.
+            This may also be used as a regular expression, depending on the context.
+          </BriefDescription>
+        </String>
+        <Int Name="item index" NumberOfRequiredValues="1" Extensible="true">
+          <BriefDescription>
+            Some items accept multiple values (for example, a DoubleItem
+            representing point coordinates might accept 3 values).
+            The index refers to the particular value(s) being hinted.
+
+            Each value of an item may have zero or more hints which apply to it.
+          </BriefDescription>
+        </Int>
+      </ItemDefinitions>
     </AttDef>
 
-    <AttDef Type="previous-result" BaseType="hint">
+    <AttDef Type="previous-result" BaseType="log hint">
       <ItemDefinitions>
         <Int Name="result index" NumberOfRequiredValues="1">
           <DefaultValue>-1</DefaultValue>
@@ -37,7 +66,7 @@
       </ItemDefinitions>
     </AttDef>
 
-    <AttDef Type="find-by-name" BaseType="hint">
+    <AttDef Type="find-by-name" BaseType="log hint">
       <ItemDefinitions>
         <String Name="name" NumberOfRequiredValues="1" Extensible="true">
           <BriefDescription>
@@ -48,7 +77,7 @@
       </ItemDefinitions>
     </AttDef>
 
-    <AttDef Type="pick-along-line" BaseType="hint">
+    <AttDef Type="pick-along-line" BaseType="log hint">
       <ItemDefinitions>
         <Double Name="base point" NumberOfRequiredValues="3">
           <BriefDescription>
