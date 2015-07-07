@@ -23,6 +23,7 @@ set(modelSrcs
   EntityPhrase.cxx
   Face.cxx
   FaceUse.cxx
+  GeomEntity.cxx
   Group.cxx
   GridInfo.cxx
   Instance.cxx
@@ -75,6 +76,7 @@ set(modelHeaders
   Face.h
   FaceUse.h
   FloatData.h
+  GeomEntity.h
   GridInfo.h
   Group.h
   Instance.h

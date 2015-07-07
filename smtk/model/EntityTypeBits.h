@@ -109,6 +109,7 @@ enum EntityTypeBits
   MODEL_ENTITY         = 0x00001000, //!< A bit indicating a (sub)model.
   INSTANCE_ENTITY      = 0x00002000, //!< A bit indicating an instance of model.
   SESSION              = 0x00004000, //!< A bit indicating a session.
+  GEOMETRIC_ENTITY     = 0x00008000, //!< A bit indicating the entity is an algebraic point locus.
   // Inherent property bits (arguably inappropriate as they could be hard to maintain):
   COVER                = 0x00100000, //!< The entity must have a relation indicating which cover(s) it participates in
   PARTITION            = 0x00200000, //!< The entity must have a relation indicating which partition(s) it participates in
@@ -122,6 +123,15 @@ enum EntityTypeBits
   ANY_DIMENSION        = 0x000000ff, //!< Mask to extract the dimensionality of an entity.
   ENTITY_MASK          = 0x00007f00, //!< Mask to extract the type of an entity. Exactly one bit should be set for any valid entity.
   ANY_ENTITY           = 0x00007fff, //!< Mask to extract the type and dimension of an entity.
+  POINT                = 0x00008101, //!< A geometric point-locus of dimension 0 (i.e., a point)
+  CURVE                = 0x00008002, //!< A geometric point-locus of dimension 1 (i.e., an curve)
+  SURFACE              = 0x00008004, //!< A geometric point-locus of dimension 2 (i.e., a surface)
+  CORE                 = 0x00008008, //!< A geometric point-locus of dimension 3 (i.e., a volumetric "core")
+  GEOM_0D              = 0x00008001, //!< A geometric point-locus of dimension 0 (i.e., a point)
+  GEOM_1D              = 0x00008002, //!< A geometric point-locus of dimension 1 (i.e., an curve)
+  GEOM_2D              = 0x00008004, //!< A geometric point-locus of dimension 2 (i.e., a surface)
+  GEOM_3D              = 0x00008008, //!< A geometric point-locus of dimension 3 (i.e., a volumetric "core")
+  ANY_GEOM             = 0x000081ff, //!< A geometric point-locus of any dimension
   VERTEX               = 0x00000101, //!< A cell of dimension 0 (i.e., a vertex)
   EDGE                 = 0x00000102, //!< A cell of dimension 1 (i.e., an edge)
   FACE                 = 0x00000104, //!< A cell of dimension 2 (i.e., a face)
@@ -159,6 +169,12 @@ enum EntityTypeBits
   HALF_CLOSED          = 0x00c00000, //!< A bit indicating that the entity should be regarded as half-open (or half-closed)
   INVALID              = 0xffffffff  //!< The entity is invalid
 };
+
+inline bool isGeomEntity(BitFlags entityFlags) { return (entityFlags & ENTITY_MASK) == GEOMETRIC_ENTITY; }
+inline bool isPoint(BitFlags entityFlags) { return (entityFlags & ANY_ENTITY) == GEOM_0D; }
+inline bool isCurve(BitFlags entityFlags)   { return (entityFlags & ANY_ENTITY) == GEOM_1D; }
+inline bool isSurface(BitFlags entityFlags)   { return (entityFlags & ANY_ENTITY) == GEOM_2D; }
+inline bool isCore(BitFlags entityFlags) { return (entityFlags & ANY_ENTITY) == GEOM_3D; }
 
 inline bool isCellEntity(BitFlags entityFlags) { return (entityFlags & ENTITY_MASK) == CELL_ENTITY; }
 inline bool isVertex(BitFlags entityFlags) { return (entityFlags & ANY_ENTITY) == CELL_0D; }
