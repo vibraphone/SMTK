@@ -36,11 +36,13 @@ class TestPythonOperatorLog(smtk.testing.TestCase):
           item      is an smtk attribute item to hold the value of interest
           target    specifies where in the item's vector of values the prior result should be placed.
         """
-        hint = self.recorder.createHint('previous-result')
+        hint = self.recorder.createHint('previous-result', 'context')
+        SetVectorValue(hint.findString('item name'), '@assoc')
+        SetVectorValue(hint.findInt('item index'), [target,])
         SetVectorValue(hint.findInt('result index'), [result,])
-        SetVectorValue(hint.findInt('result group'), [group,])
+        SetVectorValue(hint.findString('result group'), [group,])
         SetVectorValue(hint.findInt('entries'), [entry,])
-        self.recorder.setHint(item, index, hint)
+        self.recorder.addHintForItem('@assoc', hint, '/');
 
     def testSolidModelingOps(self):
         # Create a recorder.
@@ -53,8 +55,8 @@ class TestPythonOperatorLog(smtk.testing.TestCase):
         sph2 = CreateSphere(radius=0.5, center=[0.9, 0., 0.])
 
         # Note that su should have same UUID as sph2:
-        self.recordHint(result=-2, group='created', entry=0, item=-1, index=0)
-        self.recordHint(result=-1, group='created', entry=0, item=-1, index=1)
+        self.recordHint(result=-2, group='created', entry=0, item=-1, index=0, target=0)
+        self.recordHint(result=-1, group='created', entry=0, item=-1, index=1, target=1)
         su = Union([sph, sph2])
 
         # Create a cylinder:

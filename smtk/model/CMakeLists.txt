@@ -35,6 +35,7 @@ set(modelSrcs
   Shell.cxx
   ShellEntity.cxx
   SimpleModelSubphrases.cxx
+  StringData.cxx
   Manager.cxx
   SubphraseGenerator.cxx
   Tessellation.cxx

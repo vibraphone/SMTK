@@ -60,6 +60,8 @@ namespace smtk {
     /// A convenient typedef that describes how the const_iterator to one string property is used.
     typedef StringData::const_iterator PropertyNameWithConstStrings;
 
+    SMTKCORE_EXPORT StringList split(const String& text, const String& separator);
+    SMTKCORE_EXPORT String join(const StringList& textList, const String& separator);
   } // namespace model
 } // namespace smtk
 

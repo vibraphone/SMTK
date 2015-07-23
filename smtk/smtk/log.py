@@ -60,7 +60,7 @@ class PythonOperatorLog(smtk.io.OperatorLog):
         return val.entity()
       return val
 
-    def attribItemDiff(self, itm, ivar, depth = 0):
+    def attribItemDiff(self, itm, ivar, depth = 0, context = ''):
         """Return statements to set an item to match the non-default values of the given item.
 
         itm    is a pointer to the concrete attribute we must reproduce.
@@ -92,9 +92,9 @@ class PythonOperatorLog(smtk.io.OperatorLog):
             itmVarName = 'item{dp}'.format(dp=depth)
             cstmt = []
             for citm in [smtk.attribute.to_concrete(y) for x, y in itm.childrenItems().iteritems()]:
-                tmp = ['{ivar} = smtk.attribute.to_concrete({parent}.chilrenItems[\'{iname}\'])'.format(
+                tmp = ['{ivar} = smtk.attribute.to_concrete({parent}.childrenItems[\'{iname}\'])'.format(
                     ivar=itmVarName, parent=ivar, iname=citm.name())]
-                tmp += self.attribItemDiff(citm, itmVarName, depth + 1)
+                tmp += self.attribItemDiff(citm, itmVarName, depth + 1, context)
                 if len(tmp) > 1:
                   cstmt += tmp
             if len(cstmt) > 1:
@@ -107,12 +107,12 @@ class PythonOperatorLog(smtk.io.OperatorLog):
         istmt = []
         if a1.associations() and a1.associations().numberOfValues() > 0:
             istmt += ['assoc = {var}.associations()'.format(var=varName),]
-            istmt += self.attribItemDiff(a1.associations(), 'assoc')
+            istmt += self.attribItemDiff(a1.associations(), 'assoc', 0, a1.name())
         for itm in [smtk.attribute.to_concrete(a1.item(i)) for i in range(a1.numberOfItems())]:
             tmp = [
                 'item0 = smtk.attribute.to_concrete({var}.find(\'{iname}\'))'.format(
                     var=varName, iname=itm.name()),]
-            tmp += self.attribItemDiff(itm, 'item0', 1)
+            tmp += self.attribItemDiff(itm, 'item0', 1, a1.name())
             if len(tmp) > 1:
               istmt += tmp
         return istmt

@@ -16,7 +16,9 @@
 #include "smtk/model/Operator.h"
 
 #include "smtk/attribute/Attribute.h"
+#include "smtk/attribute/DoubleItem.h"
 #include "smtk/attribute/IntItem.h"
+#include "smtk/attribute/StringItem.h"
 #include "smtk/attribute/System.h"
 
 #include "boost/algorithm/string.hpp"
@@ -73,55 +75,74 @@ smtk::attribute::SystemPtr OperatorLog::hintSystem()
   return this->m_hintSys;
 }
 
-smtk::attribute::AttributePtr OperatorLog::createHint(const std::string& hintDef)
+smtk::attribute::AttributePtr OperatorLog::createHint(const std::string& hintDefName, const std::string& context)
 {
-  return this->hintSystem()->createAttribute(hintDef);
+  smtk::attribute::AttributePtr hint = this->hintSystem()->createAttribute(hintDefName);
+  if (!context.empty())
+    hint->findString("context")->setValue(0, context);
+  return hint;
 }
 
 void OperatorLog::addHintForItem(const std::string& itemPath, smtk::attribute::AttributePtr hint, const std::string& sep)
 {
   smtk::model::StringList separatedPath;
   boost::split(separatedPath, itemPath, boost::is_any_of(sep));
-  this->addHintForItem(separatedPath, hint);
-}
 
-void OperatorLog::addHintForItem(const StringList& itemPath, smtk::attribute::AttributePtr hint)
-{
   HintedItem key;
-  key.Operator = "foo";
+  key.Context = hint->findString("context")->value(0);
+  key.SeparatedPath = separatedPath;
   key.Path = itemPath;
+  key.Separator = sep;
+  smtk::attribute::StringItem::Ptr iname = hint->findString("item name");
+  if (iname->value(0).empty())
+    {
+    iname->setIsEnabled(true);
+    if (iname->numberOfValues() < 1)
+      iname->setNumberOfValues(1);
+    iname->setValue(0, itemPath);
+    }
   this->m_hints[key].insert(hint);
 }
 
-std::set<smtk::attribute::AttributePtr> OperatorLog::hintsForItem(const std::string& itemPath, const std::string& sep) const
+std::set<smtk::attribute::AttributePtr> OperatorLog::hintsForItem(
+  const std::string& context,
+  const std::string& itemPath,
+  const std::string& sep) const
 {
   smtk::model::StringList separatedPath;
   boost::split(separatedPath, itemPath, boost::is_any_of(sep));
-  return this->hintsForItem(separatedPath);
-}
 
-std::set<smtk::attribute::AttributePtr> OperatorLog::hintsForItem(const smtk::model::StringList& itemPath) const
-{
   HintedItem key;
+  key.Context = context;
   key.Path = itemPath;
+  key.Separator = sep;
+  key.SeparatedPath = separatedPath;
   HintMap::const_iterator it = this->m_hints.find(key);
   if (it != this->m_hints.end())
     return it->second;
   return std::set<smtk::attribute::AttributePtr>();
 }
 
-void OperatorLog::resetHint(const std::string& itemPath, const std::string& sep)
+void OperatorLog::resetHint(const std::string& context, const std::string& itemPath, const std::string& sep)
 {
   smtk::model::StringList separatedPath;
   boost::split(separatedPath, itemPath, boost::is_any_of(sep));
-  this->resetHint(separatedPath);
+
+  HintedItem key;
+  key.Context = context;
+  key.Path = itemPath;
+  key.Separator = sep;
+  key.SeparatedPath = separatedPath;
+  this->m_hints.erase(key);
 }
 
-void OperatorLog::resetHint(const smtk::model::StringList& itemPath)
+void OperatorLog::resetHints(const std::string& context)
 {
   HintedItem key;
-  key.Path = itemPath;
-  this->m_hints.erase(key);
+  key.Context = context;
+  HintMap::iterator it;
+  while ((it = this->m_hints.lower_bound(key)) != this->m_hints.end())
+    this->m_hints.erase(it);
 }
 
 void OperatorLog::resetHints()

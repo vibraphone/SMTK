@@ -4,28 +4,36 @@
   <Definitions>
     <AttDef Type="log hint">
       <BriefDescription>
-        The base definition for all hints.
+        The base definition for all logging hints.
       </BriefDescription>
       <ItemDefinitions>
         <String Name="context" NumberOfRequiredValues="1">
           <BriefDescription>
             An application-assigned name identifying the attribute or
             context we wish to provide hints for.
-            This is not the source of the hints, but the attribute(s)
-            being hinted.
+            This may be any string the application deems useful, but is
+            generally not the source of the hints; usually it is the
+            name of the attribute(s) being hinted.
             Definitions that inherit "log hint" provide a way to specify
             the hint itself while this base definition provides a
             common way for applications to determine which items a hint
             might apply to.
           </BriefDescription>
         </String>
-        <String Name="item name" NumberOfRequiredValues="1" Extensible="true">
+        <String Name="item name" Optional="true" Extensible="true">
           <BriefDescription>
             The name of the attribute item holding the value we wish to hint.
             This may also be used as a regular expression, depending on the context.
+            As with the context, this is a freeform field that may be used
+            differently depending on the application, context, and hint type.
+            Note that entries of this member should come in pairs; the
+            first entry specifies the path of an item and the second specifies
+            the separator character(s) used to split the path. If
+            only 1 value is provided, the separator is assumed to be a
+            forward-slash ("/").
           </BriefDescription>
         </String>
-        <Int Name="item index" NumberOfRequiredValues="1" Extensible="true">
+        <Int Name="item index" Optional="true" Extensible="true">
           <BriefDescription>
             Some items accept multiple values (for example, a DoubleItem
             representing point coordinates might accept 3 values).
@@ -46,6 +54,12 @@
             Items are ordered starting at 0 for the first operation and increasing
             from there, but negative numbers may be used to indicate counting
             backwards from the most recent result (-1).
+
+            Note that when using negative numbers, the application is responsible
+            for updating result indices as each result is added to the system.
+            Otherwise, pre-existing hints with a result index of -1 would
+            incorrectly refer to the new result.
+
             The index is across all operations being logged (i.e., all operations
             on a given model manager).
           </BriefDescription>
@@ -73,6 +87,12 @@
             The names of model entities to select.
           </BriefDescription>
         </String>
+        <Int Name="type filter" Optional="true">
+          <BriefDescription>
+            A bitmask used to specify the types of entities to accept.
+            This is useful if names are only unique among entities of a given type.
+          </BriefDescription>
+        </Int>
         <!-- might want to restrict to a specific type as well... -->
       </ItemDefinitions>
     </AttDef>
