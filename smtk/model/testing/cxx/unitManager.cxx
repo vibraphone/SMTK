@@ -59,7 +59,21 @@ int main(int argc, char* argv[])
 {
   (void)argc;
   (void)argv;
+
+  test(!Manager::activeManager(), "Expected NULL active manager before creation.");
+  test( Manager::allManagers().empty(), "Expected empty list of managers before creation.");
+
   ManagerPtr sm = Manager::create();
+
+  test( Manager::allManagers().size() == 1, "Expected exactly 1 manager in list of managers after creation.");
+  test( Manager::activeManager() == sm, "Expected active manager to match our creation.");
+
+  Manager::setActiveManager(Manager::Ptr());
+  test(!Manager::activeManager(), "Could not set active manager to NULL value.");
+
+  Manager::setActiveManager(sm);
+  test( Manager::activeManager() == sm, "Could not set active manager to non-NULL value.");
+
   sm->observe(std::make_pair(ANY_EVENT,ENTITY_ENTRY), &entityManagerEvent, NULL);
   sm->observe(std::make_pair(ANY_EVENT,MODEL_INCLUDES_FREE_CELL), &addEntityToModel, NULL);
   sm->observe(std::make_pair(ANY_EVENT,MODEL_INCLUDES_GROUP), &addEntityToModel, NULL);

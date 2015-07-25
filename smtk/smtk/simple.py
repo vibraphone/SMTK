@@ -43,6 +43,14 @@ import smtk
 
 activeSession = None
 
+def GetActiveModelManager():
+  """Return the currently active (or first created)."""
+  return smtk.model.Manager.activeManager()
+
+def SetActiveModelManager(mgr):
+  """Set the currently active (or first created)."""
+  return smtk.model.Manager.setActiveManager(mgr)
+
 def SetActiveSession(sess):
   """Set the session to be used when performing modeling operations."""
   global activeSession

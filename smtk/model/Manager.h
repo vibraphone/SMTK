@@ -382,6 +382,10 @@ public:
 
   smtk::io::Logger& log() { return this->m_log; }
 
+  static ManagerPtr activeManager();
+  static void setActiveManager(ManagerPtr mgr);
+  static std::set<ManagerPtr> allManagers();
+
 protected:
   friend class smtk::attribute::System;
 

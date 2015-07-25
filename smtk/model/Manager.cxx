@@ -47,6 +47,9 @@ using namespace smtk::common;
 namespace smtk {
   namespace model {
 
+static std::set<Manager*> AllModelManagers;
+static Manager* ActiveManager = NULL;
+
 /**@name Constructors and destructors.
   *\brief Model manager instances should always be created using the static create() method.
   *
@@ -65,6 +68,11 @@ Manager::Manager() :
   m_sessions(new UUIDsToSessions),
   m_globalCounters(2,1) // first entry is session counter, second is model counter
 {
+  AllModelManagers.insert(this);
+  if (!ActiveManager)
+    {
+    ActiveManager = this;
+    }
   // TODO: throw() when topology == NULL?
 }
 
@@ -87,6 +95,11 @@ Manager::Manager(
     m_sessions(new UUIDsToSessions),
     m_globalCounters(2,1) // first entry is session counter, second is model counter
 {
+  AllModelManagers.insert(this);
+  if (!ActiveManager)
+    {
+    ActiveManager = this;
+    }
 }
 
 /// Destroying a model manager requires us to release the default attribute manager..
@@ -101,6 +114,13 @@ Manager::~Manager()
     this->unregisterSession(this->m_defaultSession, false);
     }
   this->m_attributeAssignments->clear();
+  AllModelManagers.erase(this);
+  if (ActiveManager == this)
+    {
+    ActiveManager = NULL;
+    if (!AllModelManagers.empty())
+      ActiveManager = *AllModelManagers.begin();
+    }
 }
 //@}
 
@@ -3673,6 +3693,61 @@ void Manager::trigger(OperatorEventType event, const smtk::model::Operator& src)
     (*it->second.first)(it->first, src, it->second.second);
 }
 //@}
+
+/**\brief Return the active model manager.
+  *
+  * By default, the first model manager to be constructed is
+  * active and remains so until setActiveManager() is called
+  * or it is deleted.
+  *
+  * Upon deletion, another manager is made active (which one
+  * is unspecified if there are multiple managers).
+  *
+  * This method is useful for applications running both a UI
+  * and a Python interpreter, since otherwise it may be hard
+  * to coordinate managers.
+  *
+  * Generally, only one model manager will exist per process
+  * and it will be active. SMTK does not pay attention to
+  * which manager is active; rather, it is a convenience for
+  * applications.
+  */
+Manager::Ptr Manager::activeManager()
+{
+  return ActiveManager ? ActiveManager->shared_from_this() : Ptr();
+}
+
+/**\brief Set which model manager should be considered active.
+  *
+  * See \a Manager::activeManager() for more information.
+  */
+void Manager::setActiveManager(Ptr mgr)
+{
+  ActiveManager = mgr.get();
+}
+
+/**\brief Return a set of all model managers.
+  *
+  * Note that the returned value is a copy of the set
+  * which tracks manager instances; the returned value
+  * is not modified as instances are created or
+  * destroyed after this method is called.
+  *
+  * (The primary reason for the static nature of the
+  * returned set is that raw pointers, rather than
+  * shared pointers, are tracked - in order to avoid
+  * issues with shared pointer creation inside constructors.
+  * This method returns shared pointers for easy access
+  * in Python.)
+  */
+std::set<Manager::Ptr> Manager::allManagers()
+{
+  std::set<Ptr> result;
+  std::set<Manager*>::const_iterator it;
+  for (it = AllModelManagers.begin(); it != AllModelManagers.end(); ++it)
+    result.insert((*it)->shared_from_this());
+  return result;
+}
 
   } // namespace model
 } //namespace smtk
