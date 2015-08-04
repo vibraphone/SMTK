@@ -12,6 +12,7 @@
 
 #include "smtk/io/AttributeReader.h"
 #include "smtk/io/Logger.h"
+#include "smtk/io/LogProcessor.h"
 
 #include "smtk/model/Operator.h"
 
@@ -28,9 +29,14 @@ using namespace smtk::model;
 namespace smtk {
   namespace io {
 
+static OperatorLog* ActiveOperatorLog = NULL;
+
 OperatorLog::OperatorLog(smtk::model::ManagerPtr mgr)
   : m_hasFailures(false), m_manager(mgr)
 {
+  if (!ActiveOperatorLog)
+    ActiveOperatorLog = this;
+
   mgr->observe(smtk::model::CREATED_OPERATOR, OperatorLog::operatorCreated, this);
 }
 
@@ -50,6 +56,8 @@ OperatorLog::~OperatorLog()
       watched->unobserve(smtk::model::DID_OPERATE, OperatorLog::operatorReturned, this);
       }
     }
+  if (ActiveOperatorLog == this)
+    ActiveOperatorLog = NULL;
 }
 
 /// Return whether any operator has failed since the last call to resetFailures().
@@ -150,6 +158,80 @@ void OperatorLog::resetHints()
   this->m_hints.clear();
 }
 
+/**\brief Return an active log instance.
+  *
+  * The first OperatorLog instance to be created is considered
+  * active. Upon destruction, the active log is a NULL pointer
+  * until the next log is constructed. (Note that logs created
+  * after the initial log and before the initial log is destroyed
+  * are ignored.)
+  *
+  * This is a convenience for applications that wish to coordinate
+  * logging between C++ and Python. This method is Python-wrapped,
+  * so an active log can be set and retrieved in both contexts.
+  */
+OperatorLog* OperatorLog::activeLog()
+{
+  return ActiveOperatorLog;
+}
+
+/**\brief Override the active log.
+  *
+  * See OperatorLog::activeLog() for more information.
+  */
+void OperatorLog::setActiveLog(OperatorLog* log)
+{
+  ActiveOperatorLog = log;
+}
+
+/**\brief Add a log processor to the log.
+  *
+  * The processor's initialize method will be called.
+  */
+void OperatorLog::addLogProcessor(smtk::shared_ptr<LogProcessor> processor)
+{
+  if (this->m_processors.insert(processor).second)
+    {
+    processor->initialize(this);
+    }
+}
+
+/**\brief Remove a log processor from the log.
+  *
+  * The processor's finalize method will be called.
+  */
+void OperatorLog::removeLogProcessor(smtk::shared_ptr<LogProcessor> processor)
+{
+  if (processor)
+    {
+    processor->finalize(this);
+    this->m_processors.erase(processor);
+    }
+}
+
+/**\brief Remove all log processors from the log.
+  *
+  * Each processor's finalize method will be called.
+  */
+void OperatorLog::resetLogProcessors()
+{
+  for (ProcessorSet::iterator it = this->m_processors.begin(); it != this->m_processors.end(); ++it)
+    {
+    (*it)->finalize(this);
+    }
+  this->m_processors.clear();
+}
+
+/**\brief Notify log processors that new log records are available.
+  */
+void OperatorLog::processRecord(std::size_t finalRecordId)
+{
+  for (ProcessorSet::iterator it = this->m_processors.begin(); it != this->m_processors.end(); ++it)
+    {
+    (*it)->addRecords(this, finalRecordId);
+    }
+}
+
 #include "smtk/io/OperatorLogHints_xml.h"
 
 /**\brief Create an attribute system to hold hints and add definitions.
@@ -202,7 +284,10 @@ int OperatorLog::operatorInvoked(
   if (!self)
     return 0; // Don't stop an operation just because the recorder is unhappy.
 
-  return self->recordInvocation(event, op);
+  std::size_t finalRecordId = self->recordInvocation(event, op);
+  self->processRecord(finalRecordId);
+
+  return 0;
 }
 
 int OperatorLog::operatorReturned(
@@ -217,7 +302,11 @@ int OperatorLog::operatorReturned(
 
   self->m_hasFailures |=
     (r->findInt("outcome")->value(0) == smtk::model::OPERATION_FAILED);
-  return self->recordResult(event, op, r);
+
+  int finalRecordId = self->recordResult(event, op, r);
+  self->processRecord(finalRecordId);
+
+  return 0; // static_cast<int>(finalRecordId);
 }
 
   } // namespace io

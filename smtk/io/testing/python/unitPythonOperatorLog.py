@@ -1,5 +1,4 @@
 #!/usr/bin/python
-import sys
 #=============================================================================
 #
 #  Copyright (c) Kitware, Inc.
@@ -11,6 +10,8 @@ import sys
 #  PURPOSE.  See the above copyright notice for more information.
 #
 #=============================================================================
+import sys
+import os
 import smtk
 import smtk.testing
 import smtk.log
@@ -25,6 +26,8 @@ class TestPythonOperatorLog(smtk.testing.TestCase):
             self.skipTest('CGM session unavailable')
         sref.assignDefaultName()
         SetActiveSession(sref)
+        import tempfile
+        self.tmpdir = tempfile.mkdtemp()
 
     def recordHint(self, result, group, entry, item, index, target):
         """Create a "previous-result" hint and associate it with an item's value(s).
@@ -42,16 +45,19 @@ class TestPythonOperatorLog(smtk.testing.TestCase):
         SetVectorValue(hint.findInt('result index'), [result,])
         SetVectorValue(hint.findString('result group'), [group,])
         SetVectorValue(hint.findInt('entries'), [entry,])
-        self.recorder.addHintForItem('@assoc', hint, '/');
+        self.recorder.addHintForItem('@assoc', hint, '/')
 
     def testSolidModelingOps(self):
         # Create a recorder.
         # It will immediately start logging all operations on the manager
         # (and only those on the specified model manager).
         self.recorder = smtk.log.PythonOperatorLog(self.mgr)
+        self.logToFile = smtk.io.LogToFile.create()
+        self.logToFile.setFilename(os.path.join(self.tmpdir, 'XXX.py'))
+        self.recorder.addLogProcessor(self.logToFile)
 
         # Create a thick spherical shell and a sphere:
-        sph = CreateSphere(radius=1.0, inner_radius=0.2, center=[0.2, 0.2, 0.2])
+        sph = CreateSphere(radius=1.0, center=[0.2, 0.2, 0.2])
         sph2 = CreateSphere(radius=0.5, center=[0.9, 0., 0.])
 
         # Note that su should have same UUID as sph2:
@@ -73,27 +79,34 @@ class TestPythonOperatorLog(smtk.testing.TestCase):
             'Expected invalid session name after closing, got "{s}"'.format(
                 s=GetActiveSession().name()))
 
-        # Print what we recorded:
-        # First, the preamble.
-        print '\n'.join(self.recorder.preamble())
-        print ''
+        ## Print what we recorded:
+        ## First, the preamble.
+        #print self.recorder.preamble()
+        #print ''
 
-        # Second, the list of operations.
-        history = self.recorder.records()
-        for op in history:
-          print '# Operator {op}'.format(op=op['name'])
-          print '\n'.join(op['statements'])
-          print '\n# outcome {oc}'.format(oc=op['outcome'])
-          print '# created ', '\n# created '.join([str(x) for x in op['created']])
-          print '# expunged ', '\n# expunged '.join([str(x) for x in op['expunged']])
-          print '# modified ', '\n# modified '.join([str(x) for x in op['modified']])
-          print ''
+        ## Second, the list of operations.
+        #history = self.recorder.records()
+        #for op in history:
+        #  print '# Operator {op}'.format(op=op['name'])
+        #  print '\n'.join(op['statements'])
+        #  print '\n# outcome {oc}'.format(oc=op['outcome'])
+        #  print '# created ', '\n# created '.join([str(x) for x in op['created']])
+        #  print '# expunged ', '\n# expunged '.join([str(x) for x in op['expunged']])
+        #  print '# modified ', '\n# modified '.join([str(x) for x in op['modified']])
+        #  print ''
 
-        # Create a new manager
-        #self.mgr = smtk.model.Manager.create()
-        #sref = self.mgr.createSession('cgm')
-        #sref.setName('Replay')
-        #SetActiveSession(sref)
+        ## Create a new manager
+        ##self.mgr = smtk.model.Manager.create()
+        ##sref = self.mgr.createSession('cgm')
+        ##sref.setName('Replay')
+        ##SetActiveSession(sref)
+
+    def tearDown(self):
+        try:
+            import shutil
+            shutil.rmtree(self.tmpdir)
+        except:
+            pass
 
 if __name__ == '__main__':
     smtk.testing.process_arguments()

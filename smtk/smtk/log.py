@@ -30,16 +30,24 @@ class PythonOperatorLog(smtk.io.OperatorLog):
             'mgr = smtk.model.Manager.create()',
             ]
         for sess in mgr.sessions():
-          varname = self.varNameFromLabel(sess.name())
-          self.setup += [
-              '{svar} = mgr.createSession(\'{stype}\')'.format(
-                  svar=varname,
-                  stype=sess.session().name().encode('string-escape')),
-              '{svar}.setName(\'{sname}\')'.format(
-                  svar=varname,
-                  sname=sess.name().encode('string-escape'))
-              ]
-          self.session_map[sess] = varname
+          self.registerSession(sess)
+
+    def registerSession(self, sess):
+        """Add a modeling session to the log.
+
+        This generates a variable name for the session and adds
+        a statement to the preamble that will recreate the session.
+        """
+        varname = self.varNameFromLabel(sess.name())
+        self.setup += [
+            '{svar} = mgr.createSession(\'{stype}\')'.format(
+                svar=varname,
+                stype=sess.session().name().encode('string-escape')),
+            '{svar}.setName(\'{sname}\')'.format(
+                svar=varname,
+                sname=sess.name().encode('string-escape'))
+            ]
+        self.session_map[sess] = varname
 
     def varNameFromLabel(self, label):
         import string
@@ -123,8 +131,12 @@ class PythonOperatorLog(smtk.io.OperatorLog):
         self.opnum += 1
         specDefType = spec.definition().type()
         opname = 'op{num}'.format(num=self.opnum)
+        # Ensure we have the session in our map:
+        sref = op.session().ref()
+        if sref not in self.session_map:
+          self.registerSession(sref)
         prestmt = ['{opname} = {sessvar}.op(\'{dtype}\')'.format(
-            sessvar=self.session_map[op.session().ref()],
+            sessvar=self.session_map[sref],
             opname=opname,
             dtype=specDefType),]
         poststmt = ['res = {opname}.operate()'.format(
@@ -134,20 +146,21 @@ class PythonOperatorLog(smtk.io.OperatorLog):
     def recordInvocation(self, evt, op):
         """Called when an operator is invoked."""
         self.active.append([op.name(),op.session().ref(),self.opDiff(op)])
-        print 'Record Invocation of {nm}!'.format(nm=op.name())
-        print self.active[-1]
-        return 0
+        self.history.append(self.active[-1])
+        #print 'Record Invocation of {nm}!'.format(nm=op.name())
+        #print self.active[-1]
+        return len(self.history)
 
     def entityVector(self, itm):
       return [self.valueFormatter(itm.value(i)) for i in range(itm.numberOfValues())]
 
     def recordResult(self, evt, op, res):
         """Called when an operator provides its results."""
-        print 'Record Result ({n})'.format(n=len(self.history)+1)
+        #print 'Record Result ({n})'.format(n=len(self.history)+1)
         outcome = smtk.model.OperatorOutcome(
             res.findInt('outcome').value(0))
         if len(self.active) and self.active[-1][0] == op.name():
-            self.history.append({
+            self.history.append([{
                 'name':self.active[-1][0],
                 'session':self.active[-1][1],
                 'statements':self.active[-1][2],
@@ -155,16 +168,35 @@ class PythonOperatorLog(smtk.io.OperatorLog):
                 'created':self.entityVector(res.findModelEntity('created')),
                 'expunged':self.entityVector(res.findModelEntity('expunged')),
                 'modified':self.entityVector(res.findModelEntity('modified')),
-            })# + [outcome,])
+            }])# + [outcome,])
             self.active = self.active[:-1]
         else:
-            self.history.append({'name':self.active[-1][0], 'statements':'***ERROR***'})
-        return 0
+            self.history.append([{'name':self.active[-1][0], 'statements':'***ERROR***'}])
+        return len(self.history)
+        #return 1
 
     def preamble(self):
       """Return statements that prepare the interpreter."""
-      return self.setup
+      return '\n'.join(self.setup)
 
     def records(self):
         """Return the statements reproducing the history so far."""
         return self.history
+
+    def textForRecord(self, rec):
+        """Return a text string for the given log record.
+
+        The string content is dependent on the type of OperatorLog.
+        In this case, it is a Python statement."""
+        if rec < 0:
+          return self.recorder.preamble()
+        elif rec < len(self.history):
+          op = self.history[rec]
+          #stmts = '# Operator {op}'.format(op=op['name'])
+          #stmts += '\n'.join(op['statements'])
+          #stmts += '\n# outcome {oc}'.format(oc=op['outcome'])
+          #stmts += '# created ' + '\n# created '.join([str(x) for x in op['created']])
+          #stmts += '# expunged ' + '\n# expunged '.join([str(x) for x in op['expunged']])
+          #stmts += '# modified ' + '\n# modified '.join([str(x) for x in op['modified']])
+          return '\n'.join([str(x) for x in op]) + '\n'
+        return '# Bad record number {recid}\n'.format(recid=rec)

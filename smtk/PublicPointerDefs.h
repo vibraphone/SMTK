@@ -156,6 +156,8 @@ namespace smtk
     class ExportJSON;
     class ImportJSON;
     class OperatorLog;
+    class LogProcessor;
+    class LogToFile;
   }
 
   namespace common
@@ -288,11 +290,19 @@ namespace smtk
       typedef smtk::shared_ptr< RemusRPCWorker >       RemusRPCWorkerPtr;
     }
   }
+
   namespace simulation
   {
     //custom user data classes
     typedef smtk::shared_ptr< smtk::simulation::ExportSpec > ExportSpecPtr;
     typedef smtk::shared_ptr< smtk::simulation::UserData > UserDataPtr;
+  }
+
+  namespace io
+  {
+    typedef smtk::shared_ptr<smtk::io::OperatorLog> OperatorLogPtr;
+    typedef smtk::shared_ptr<smtk::io::LogProcessor> LogProcessorPtr;
+    typedef smtk::shared_ptr<smtk::io::LogToFile> LogToFilePtr;
   }
 
 #ifdef smtk_has_owner_less

@@ -13,12 +13,17 @@
 
 #include "smtk/CoreExports.h"
 #include "smtk/SystemConfig.h"
+#include "smtk/SharedFromThis.h"
 #include "smtk/PublicPointerDefs.h"
 #include "smtk/model/Events.h"
 #include "smtk/model/StringData.h"
 
+#include <cstddef> // for std::size_t
+
 namespace smtk {
   namespace io {
+
+class LogProcessor;
 
 /**\brief Log operations run in a session for later adaptation or replay.
   *
@@ -131,6 +136,7 @@ class SMTKCORE_EXPORT OperatorLog
 public:
   OperatorLog(smtk::model::ManagerPtr mgr);
   virtual ~OperatorLog();
+  smtkTypeMacro(OperatorLog);
 
   bool hasFailures() const;
   void resetFailures();
@@ -143,24 +149,45 @@ public:
   void resetHints(const std::string& context);
   void resetHints();
 
+  static OperatorLog* activeLog();
+  static void setActiveLog(OperatorLog* log);
+
+  virtual std::string preamble() const { return ""; }
+  virtual std::string textForRecord(int i) const = 0;
+  virtual std::string postscript() const { return ""; }
+
+  void addLogProcessor(LogProcessorPtr processor);
+  void removeLogProcessor(LogProcessorPtr processor);
+  void resetLogProcessors();
+
 protected:
+  void processRecord(std::size_t recordId);
+
   /**\brief Log the invocation of an operator.
+    *
+    * The return value should be either -1 (failure) or the
+    * number of the first record inserted to the log that
+    * represents part of the given operation.
     *
     * Subclasses must implement this method.
     * Be aware that this method may not be called for
     * all operators if a filter is in place.
     */
-  virtual int recordInvocation(
+  virtual std::size_t recordInvocation(
     smtk::model::OperatorEventType event,
     const smtk::model::Operator& op) = 0;
 
   /**\brief Log the result of an operator.
     *
+    * The return value should be either -1 (failure) or the
+    * number of the first record inserted to the log that
+    * represents part of the given result.
+    *
     * Subclasses must implement this method.
     * Be aware that this method may not be called for
     * all operators if a filter is in place.
     */
-  virtual int recordResult(
+  virtual std::size_t recordResult(
     smtk::model::OperatorEventType event,
     const smtk::model::Operator& op,
     smtk::model::OperatorResult r) = 0;
@@ -198,12 +225,14 @@ protected:
     };
   typedef std::vector<smtk::model::WeakOperatorPtr> WeakOpArray;
   typedef std::map<HintedItem, std::set<smtk::attribute::AttributePtr> > HintMap;
+  typedef std::set<smtk::shared_ptr<LogProcessor> > ProcessorSet;
 
   bool m_hasFailures;
   smtk::model::WeakManagerPtr m_manager;
   smtk::attribute::SystemPtr m_hintSys;
   HintMap m_hints;
   WeakOpArray m_watching;
+  ProcessorSet m_processors;
 };
 
   } // namespace io

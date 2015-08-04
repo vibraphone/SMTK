@@ -1018,6 +1018,10 @@
   <value-type template="smtk::shared_ptr" args="smtk::attribute::VoidItem" />
   <value-type template="smtk::shared_ptr" args="smtk::attribute::VoidItemDefinition" />
 
+  <value-type template="smtk::shared_ptr" args="smtk::io::OperatorLog"/>
+  <value-type template="smtk::shared_ptr" args="smtk::io::LogProcessor"/>
+  <value-type template="smtk::shared_ptr" args="smtk::io::LogToFile"/>
+
   <value-type template="smtk::shared_ptr" args="smtk::common::Resource" />
   <value-type template="smtk::shared_ptr" args="smtk::common::View" />
   <value-type template="smtk::shared_ptr" args="smtk::simulation::UserData" />
@@ -2040,6 +2044,22 @@
         <include file-name="smtk/io/Logger.h" location="local"/>
         <enum-type name="Severity"/>
         <object-type name="Record" />
+      </object-type>
+
+      <object-type name="LogProcessor">
+        <include file-name="smtk/io/LogProcessor.h" location="local"/>
+      </object-type>
+
+      <object-type name="LogToFile">
+        <include file-name="smtk/io/LogToFile.h" location="local"/>
+        <add-function signature="create()"
+          static="yes"
+          return-type="smtk::shared_ptr&lt;smtk::io::LogToFile&gt;">
+          <inject-code>
+            %RETURN_TYPE %0 = smtk::io::LogToFile::create();
+            %PYARG_0 = %CONVERTTOPYTHON[%RETURN_TYPE](%0);
+          </inject-code>
+        </add-function>
       </object-type>
 
       <object-type name="OperatorLog">

@@ -8,6 +8,7 @@ set(ioSrcs
   ExportJSON.cxx
   ImportJSON.cxx
   Logger.cxx
+  LogToFile.cxx
   OperatorLog.cxx
   ResourceSetReader.cxx
   ResourceSetWriter.cxx
@@ -23,6 +24,8 @@ set(ioHeaders
   ImportJSON.h
   Logger.h
   OperatorLog.h
+  LogProcessor.h
+  LogToFile.h
   ResourceSetReader.h
   ResourceSetWriter.h
   #XmlDocV1Parser.h

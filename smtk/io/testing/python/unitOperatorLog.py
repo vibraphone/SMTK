@@ -24,9 +24,7 @@ class LogOperatorNames(smtk.io.OperatorLog):
        this point) which we compare to a known good list.
     """
     def __init__(self, mgr):
-        # Invoke the C++ superclass constructor
         super(LogOperatorNames, self).__init__(mgr)
-
         # Keep a list of operations we have performed in the
         # "history" member and a stack of the currently-running
         # operators in the "active" member:
@@ -52,6 +50,10 @@ class LogOperatorNames(smtk.io.OperatorLog):
             self.history.append(
               ['***ERROR*** {nm}'.format(op.name()), outcome])
         return 0
+
+    def textForRecord(self, rec):
+      """Return a string given a record number."""
+      return self.history[rec]
 
 class TestOperatorLog(smtk.testing.TestCase):
 
