@@ -1,5 +1,6 @@
 set(smtkIOPythonTests
   unitOperatorLog
+  unitPythonOperatorLog
   ResourceSetTest
 )
 
