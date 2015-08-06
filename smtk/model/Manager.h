@@ -384,7 +384,7 @@ public:
 
   static ManagerPtr activeManager();
   static void setActiveManager(ManagerPtr mgr);
-  static std::set<ManagerPtr> allManagers();
+  static std::set<smtk::model::ManagerPtr> allManagers();
 
 protected:
   friend class smtk::attribute::System;

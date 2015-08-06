@@ -148,6 +148,8 @@
   <suppress-warning text="skipping function 'smtk::io::OperatorLog::hintSystem', unmatched return type 'smtk::attribute::SystemPtr'"/>
   <suppress-warning text="skipping field 'OperatorLog::m_hintSys' with unmatched type 'smtk::shared_ptr&lt;smtk::attribute::System&gt;'"/>
   <suppress-warning text="skipping field 'OperatorLog::m_hints' with unmatched type 'std::map&lt;smtk::io::OperatorLog::HintedItem,std::set&lt;smtk::attribute::AttributePtr&gt;&gt;'"/>
+  <suppress-warning text="skipping field 'OperatorLog::m_processors' with unmatched type 'std::set&lt;smtk::shared_ptr&lt;LogProcessor&gt;&gt;'"/>
+  <suppress-warning text="skipping field 'LogToFile::m_stream' with unmatched type 'std::ostream'"/>
 
   <!-- do not support input or output streams-->
   <suppress-warning text="skipping function 'smtk::common::operator&lt;&lt;', unmatched return type 'std::ostream&amp;'"/>
@@ -291,10 +293,15 @@
   <suppress-warning text="template baseclass 'smtk::enable_shared_from_this&lt;__VA_ARGS__&gt;' of 'Manager' is not known"/>
   <suppress-warning text="template baseclass 'smtk::enable_shared_from_this&lt;__VA_ARGS__&gt;' of 'Session' is not known"/>
   <suppress-warning text="template baseclass 'smtk::enable_shared_from_this&lt;__VA_ARGS__&gt;' of 'DescriptivePhrase' is not known"/>
+  <suppress-warning text="template baseclass 'smtk::enable_shared_from_this&lt;__VA_ARGS__&gt;' of 'LogProcessor' is not known"/>
   <suppress-warning text="template baseclass 'smtk::enable_shared_from_this&lt;__VA_ARGS__&gt;' of 'Operator' is not known"/>
   <suppress-warning text="skipping function 'smtk::model::Manager::create', unmatched return type 'smtk::shared_ptr&lt;smtk::model::Manager::SelfType&gt;'"/>
   <suppress-warning text="skipping function 'smtk::model::Manager::create', unmatched return type 'smtk::shared_ptr&lt;smtk::model::Manager::SelfType&gt;'"/>
   <suppress-warning text="skipping function 'smtk::model::Manager::shared_from_this', unmatched return type 'smtk::shared_ptr&lt;smtk::model::Manager::SelfType&gt;'"/>
+  <suppress-warning text="skipping function 'smtk::io::LogToFile::setStream', unmatched parameter type 'std::ostream*'"/>
+  <suppress-warning text="skipping function 'smtk::io::LogToFile::shared_from_this', unmatched return type 'smtk::shared_ptr&lt;const smtk::io::LogToFile::SelfType&gt;'"/>
+  <suppress-warning text="skipping function 'smtk::io::LogToFile::create', unmatched return type 'smtk::shared_ptr&lt;smtk::io::LogToFile::SelfType&gt;'"/>
+  <suppress-warning text="skipping function 'smtk::io::LogToFile::shared_from_this', unmatched return type 'smtk::shared_ptr&lt;smtk::io::LogToFile::SelfType&gt;'"/>
 
   <!-- TODO: Fix or categorize these warnings -->
   <suppress-warning text="skipping function 'smtk::model::SubphraseGenerator::addEntityProperties', unmatched parameter type 'smtk::model::DescriptivePhrase::Ptr'"/>
