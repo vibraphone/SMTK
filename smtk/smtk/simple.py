@@ -83,6 +83,14 @@ def StartSMTK(**kwargs):
       if sess:
           SetActiveSession(sess)
 
+def StopSMTK():
+  """Release the active model manager (if smtk.simple owns it), thus ending all sessions."""
+  global ownedManager
+  if ownedManager is not None:
+    ownedManager = None
+    return True
+  return False
+
 def GetActiveOperatorLog():
   """Return the currently-active operator log (or None)."""
   return smtk.io.OperatorLog.activeLog()
@@ -161,9 +169,15 @@ def SetVectorValue(item,v):
   if the values in v cannot be converted to the proper
   type.
   """
+  import uuid
   item.setNumberOfValues(len(v))
+  if hasattr(item, 'setIsEnabled'):
+    item.setIsEnabled(True)
   for i in range(len(v)):
-    item.setValue(i,v[i])
+    if type(v[i]) == uuid.UUID:
+      item.setValue(i,smtk.model.EntityRef(GetActiveModelManager(), v[i]))
+    else:
+      item.setValue(i,v[i])
 
 def GetVectorValue(item):
   """Given an smtk.attribute.Item, return a list containing its values."""

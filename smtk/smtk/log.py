@@ -24,10 +24,11 @@ class PythonOperatorLog(smtk.io.OperatorLog):
         #self.var_regex = re.compile('((?<=[a-z0-9])[A-Z]|(?!^)[A-Z](?=[a-z]))')
         self.session_map = {}
         self.setup += [
-            'from uuid import UUID',
             'import smtk',
             'from smtk.simple import *',
-            'mgr = smtk.model.Manager.create()',
+            'from uuid import UUID',
+            'StartSMTK()',
+            'mgr = GetActiveModelManager()',
             ]
         for sess in mgr.sessions():
           self.registerSession(sess)
@@ -40,10 +41,10 @@ class PythonOperatorLog(smtk.io.OperatorLog):
         """
         varname = self.varNameFromLabel(sess.name())
         self.setup += [
-            '{svar} = mgr.createSession(\'{stype}\')'.format(
+            '{svar} = mgr.createSession(\'{stype}\')\n'.format(
                 svar=varname,
                 stype=sess.session().name().encode('string-escape')),
-            '{svar}.setName(\'{sname}\')'.format(
+            '{svar}.setName(\'{sname}\')\n'.format(
                 svar=varname,
                 sname=sess.name().encode('string-escape'))
             ]
@@ -100,7 +101,7 @@ class PythonOperatorLog(smtk.io.OperatorLog):
             itmVarName = 'item{dp}'.format(dp=depth)
             cstmt = []
             for citm in [smtk.attribute.to_concrete(y) for x, y in itm.childrenItems().iteritems()]:
-                tmp = ['{ivar} = smtk.attribute.to_concrete({parent}.childrenItems[\'{iname}\'])'.format(
+                tmp = ['{ivar} = smtk.attribute.to_concrete({parent}.childrenItems()[\'{iname}\'])'.format(
                     ivar=itmVarName, parent=ivar, iname=citm.name())]
                 tmp += self.attribItemDiff(citm, itmVarName, depth + 1, context)
                 if len(tmp) > 1:
@@ -139,16 +140,23 @@ class PythonOperatorLog(smtk.io.OperatorLog):
             sessvar=self.session_map[sref],
             opname=opname,
             dtype=specDefType),]
-        poststmt = ['res = {opname}.operate()'.format(
+        poststmt = ['res{opnum} = {opname}.operate()'.format(
+          opnum=self.opnum,
           opname=opname),]
         return prestmt + self.attribDiff(spec, opname + '.specification()') + poststmt
 
     def recordInvocation(self, evt, op):
         """Called when an operator is invoked."""
         self.active.append([op.name(),op.session().ref(),self.opDiff(op)])
-        self.history.append(self.active[-1])
         #print 'Record Invocation of {nm}!'.format(nm=op.name())
         #print self.active[-1]
+        self.history.append(
+            self.statementsForInvocation({
+                'name':self.active[-1][0],
+                'session':self.active[-1][1],
+                'statements':self.active[-1][2],
+            })
+        )
         return len(self.history)
 
     def entityVector(self, itm):
@@ -160,15 +168,17 @@ class PythonOperatorLog(smtk.io.OperatorLog):
         outcome = smtk.model.OperatorOutcome(
             res.findInt('outcome').value(0))
         if len(self.active) and self.active[-1][0] == op.name():
-            self.history.append([{
-                'name':self.active[-1][0],
-                'session':self.active[-1][1],
-                'statements':self.active[-1][2],
-                'outcome':outcome,
-                'created':self.entityVector(res.findModelEntity('created')),
-                'expunged':self.entityVector(res.findModelEntity('expunged')),
-                'modified':self.entityVector(res.findModelEntity('modified')),
-            }])# + [outcome,])
+            self.history.append(
+                self.statementsForResult({
+                    'name':self.active[-1][0],
+                    'session':self.active[-1][1],
+                    'statements':self.active[-1][2],
+                    'outcome':outcome,
+                    'created':self.entityVector(res.findModelEntity('created')),
+                    'expunged':self.entityVector(res.findModelEntity('expunged')),
+                    'modified':self.entityVector(res.findModelEntity('modified')),
+                })
+            )# + [outcome,])
             self.active = self.active[:-1]
         else:
             self.history.append([{'name':self.active[-1][0], 'statements':'***ERROR***'}])
@@ -195,12 +205,19 @@ class PythonOperatorLog(smtk.io.OperatorLog):
         if rec < 0:
           return self.recorder.preamble()
         elif rec < len(self.history):
-          op = self.history[rec]
-          #stmts = '# Operator {op}'.format(op=op['name'])
-          #stmts += '\n'.join(op['statements'])
-          #stmts += '\n# outcome {oc}'.format(oc=op['outcome'])
-          #stmts += '# created ' + '\n# created '.join([str(x) for x in op['created']])
-          #stmts += '# expunged ' + '\n# expunged '.join([str(x) for x in op['expunged']])
-          #stmts += '# modified ' + '\n# modified '.join([str(x) for x in op['modified']])
-          return '\n'.join([str(x) for x in op]) + '\n'
-        return '# Bad record number {recid}\n'.format(recid=rec)
+          return self.history[rec]
+        return '# Bad log record number {recid}\n'.format(recid=rec)
+
+    def statementsForInvocation(self, info):
+        """Return python statements to run an operator equivalent to the one reported by info."""
+        stmt = '# Operator {op}\n'.format(op=info['name'])
+        stmt += '\n'.join(info['statements'])
+        return stmt
+
+    def statementsForResult(self, info):
+        """Return python statements summarizing an operator result equivalent to the one reported by info."""
+        stmt = '\n# outcome {oc}\n'.format(oc=info['outcome'])
+        stmt += '# created ' + '\n# created '.join([str(x) for x in info['created']]) + '\n'
+        stmt += '# expunged ' + '\n# expunged '.join([str(x) for x in info['expunged']]) + '\n'
+        stmt += '# modified ' + '\n# modified '.join([str(x) for x in info['modified']]) + '\n'
+        return stmt + '\n'
