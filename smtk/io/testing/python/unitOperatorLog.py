@@ -51,6 +51,10 @@ class LogOperatorNames(smtk.io.OperatorLog):
               ['***ERROR*** {nm}'.format(op.name()), outcome])
         return 0
 
+    def numberOfRecords(self):
+      """Return the number of log entries."""
+      return len(self.history)
+
     def textForRecord(self, rec):
       """Return a string given a record number."""
       return self.history[rec]

@@ -183,6 +183,10 @@ class PythonOperatorLog(smtk.io.OperatorLog):
         """Return the statements reproducing the history so far."""
         return self.history
 
+    def numberOfRecords(self):
+        """Return the number of log records so far."""
+        return len(self.records())
+
     def textForRecord(self, rec):
         """Return a text string for the given log record.
 

@@ -153,6 +153,7 @@ public:
   static void setActiveLog(OperatorLog* log);
 
   virtual std::string preamble() const { return ""; }
+  virtual int numberOfRecords() const = 0;
   virtual std::string textForRecord(int i) const = 0;
   virtual std::string postscript() const { return ""; }
 

@@ -42,6 +42,8 @@ will use its operators. ::
 import smtk
 
 activeSession = None
+activePythonLog = None
+ownedManager = None
 
 def GetActiveModelManager():
   """Return the currently active (or first created)."""
@@ -60,6 +62,74 @@ def GetActiveSession():
   """Return the currently-active modeling session."""
   global activeSession
   return activeSession
+
+def StartSMTK(**kwargs):
+  """Create a model manager, attribute system, and optionally start a session.
+
+  A session is created and made active when the session named-argument
+  is passed with a valid session type.
+
+  Example:
+
+      from smtk.simple import *
+      StartSMTK(session='discrete')
+      models = Read('pmdc.cmb')
+  """
+  if GetActiveModelManager() is None:
+      global ownedManager
+      ownedManager = smtk.model.Manager.create()
+  if 'session' in kwargs:
+      sess = GetActiveModelManager().createSession(kwargs['session'])
+      if sess:
+          SetActiveSession(sess)
+
+def GetActiveOperatorLog():
+  """Return the currently-active operator log (or None)."""
+  return smtk.io.OperatorLog.activeLog()
+
+def StartOperatorLogging(**kwargs):
+  """If not currently logging, start logging operations on the active model manager.
+
+  If logging is already ongoing or no model manager exists,
+  this method returns False and does nothing.
+  Otherwise it creates a smtk.log.PythonOperatorLog
+  instance and returns True.
+
+  Passing a named "filename" argument will also log operations
+  as a python script to the named file.
+
+     StartOperatorLogging(filename='/tmp/log.py')
+
+  Call GetActiveOperatorLog() to obtain the running log.
+  Call StopOperatorLogging() to destroy the resulting log.
+  Note that after calling StopOperatorLogging, you will not have access to
+  the log object (but the log file will remain if you specified a filename).
+  """
+  if GetActiveOperatorLog() is not None:
+      return False
+  mgr = GetActiveModelManager()
+  if mgr:
+      global activePythonLog
+      import smtk.log
+      activePythonLog = smtk.log.PythonOperatorLog(mgr)
+      if 'filename' in kwargs:
+          logToFile = smtk.io.LogToFile.create()
+          logToFile.setFilename(kwargs['filename'])
+          activePythonLog.addLogProcessor(logToFile)
+      return True
+  return False
+
+def StopOperatorLogging():
+  """If currently logging, stop logging operations and destroy the log.
+
+  Note that after calling StopOperatorLogging, you will not have access to the log.
+  Returns True if logging is stopped and False otherwise.
+  """
+  global activePythonLog
+  if GetActiveOperatorLog() is None:
+    return False
+  activePythonLog = None # Should destroy log as it is the only reference held.
+  return True
 
 class CurveType:
   ARC = 1
