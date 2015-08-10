@@ -10,6 +10,7 @@
 
 
 #include "smtk/attribute/System.h"
+#include "smtk/attribute/Events.h"
 #include "smtk/attribute/Attribute.h"
 #include "smtk/attribute/Definition.h"
 #include "smtk/attribute/RefItem.h"
@@ -29,6 +30,7 @@ using namespace smtk::attribute;
 //----------------------------------------------------------------------------
 System::System()
 {
+  this->trigger(SystemCreatedEvent(this));
 }
 
 //----------------------------------------------------------------------------
@@ -40,6 +42,7 @@ System::~System()
     // Decouple all defintions from this system
     (*it).second->clearSystem();
     }
+  this->trigger(SystemDestroyedEvent(this));
  }
 
 //----------------------------------------------------------------------------
@@ -77,6 +80,7 @@ System::createDefinition(const std::string &typeName,
     // Need to add this new definition to the list of derived defs
     this->m_derivedDefInfo[def].insert(newDef);
     }
+  this->trigger(SystemAddDefinitionEvent(newDef));
   return newDef;
 }
 
@@ -100,6 +104,7 @@ System::createDefinition(const std::string &typeName,
     // Need to add this new definition to the list of derived defs
     this->m_derivedDefInfo[baseDef].insert(newDef);
     }
+  this->trigger(SystemAddDefinitionEvent(newDef));
   return newDef;
 }
 
@@ -123,6 +128,7 @@ smtk::attribute::AttributePtr System::createAttribute(const std::string &name,
   this->m_attributeClusters[def->type()].insert(a);
   this->m_attributes[name] = a;
   this->m_attributeIdMap[a->id()] = a;
+  //this->trigger(SystemAddAttributeEvent(a));
   return a;
 }
 
@@ -184,6 +190,7 @@ System::createAttribute(const std::string &name,
   this->m_attributeClusters[def->type()].insert(a);
   this->m_attributes[name] = a;
   this->m_attributeIdMap[id] = a;
+  //this->trigger(SystemAddAttributeEvent(a));
   return a;
 }
 //----------------------------------------------------------------------------
@@ -210,6 +217,7 @@ System::createAttribute(const std::string &name,
   this->m_attributeClusters[typeName].insert(a);
   this->m_attributes[name] = a;
   this->m_attributeIdMap[id] = a;
+  //this->trigger(SystemAddAttributeEvent(a));
   return a;
 }
 //----------------------------------------------------------------------------
@@ -220,6 +228,7 @@ bool System::removeAttribute(smtk::attribute::AttributePtr att)
     {
     return false;
     }
+  //this->trigger(SystemDelAttributeEvent(att));
   this->m_attributes.erase(att->name());
   this->m_attributeIdMap.erase(att->id());
   this->m_attributeClusters[att->type()].erase(att);
@@ -336,6 +345,8 @@ bool System::rename(smtk::attribute::AttributePtr att, const std::string &newNam
     {
     return false;
     }
+  //this->trigger(SYSTEM_RENAME_ATTRIBUTE, this, att, att->name(), newName);
+  //this->trigger(SystemRenameAttributeEvent(att, newName));
   this->m_attributes.erase(att->name());
   att->setName(newName);
   this->m_attributes[newName] = att;
@@ -890,6 +901,7 @@ bool System::copyAttributeImpl(smtk::attribute::AttributePtr sourceAtt,
 void System::addView(smtk::common::ViewPtr v)
 {
   this->m_views[v->title()] = v;
+  //this->trigger(SystemAddViewEvent(v));
 }
 //----------------------------------------------------------------------------
 smtk::common::ViewPtr System::findViewByType(const std::string &vtype) const

@@ -13,6 +13,7 @@ set(attributeTests
   attributeAutoNamingTest
   attributeReferencingTest
   categoryTest
+  unitAttributeEvents
 )
 set(basicAttributeXMLWriterTest_ARGS
   "${CMAKE_BINARY_DIR}/Testing/Temporary/basicAttributeXMLWriterTest.xml"

@@ -7,6 +7,7 @@ set(attributeHeaders
   DirectoryItemDefinition.h
   DoubleItem.h
   DoubleItemDefinition.h
+  Events.h
   FileItem.h
   FileItemDefinition.h
   GroupItem.h
@@ -40,6 +41,7 @@ set(attributeSrcs
   DirectoryItemDefinition.cxx
   DoubleItem.cxx
   DoubleItemDefinition.cxx
+  Events.cxx
   FileItem.cxx
   FileItemDefinition.cxx
   GroupItem.cxx
