@@ -93,19 +93,19 @@ int testAttributeValueChange()
 
   smtk::model::testing::Timer timer;
   timer.mark();
-  for (int i = 0; i < 1000000; ++i)
+  for (int i = 0; i < 10000000; ++i)
     att->findDouble("floatingPoint")->setValue(0, drand48());
   double deltaT1 = timer.elapsed();
-  std::cout << "Callback with one conditional:   " << deltaT1 << " (" << (deltaT1/1e6) << "/call)\n";
+  std::cout << "Callback with one conditional:   " << deltaT1 << " (" << (deltaT1/1e7) << "/call)\n";
 
   ItemValueChangedEvent<double>::removeResponse(cbIdx);
   test(ItemValueChangedEvent<double>::responses().empty(), "Definition callback not unregistered!");
 
   timer.mark();
-  for (int i = 0; i < 1000000; ++i)
+  for (int i = 0; i < 10000000; ++i)
     att->findDouble("floatingPoint")->setValue(0, drand48());
   double deltaT2 = timer.elapsed();
-  std::cout << "No callbacks registered:         " << deltaT2 << " (" << (deltaT2/1e6) << "/call)\n";
+  std::cout << "No callbacks registered:         " << deltaT2 << " (" << (deltaT2/1e7) << "/call)\n";
 
   // Now add a bunch of do-nothing callbacks:
   for (int i = 0; i < 1000; ++i)
@@ -117,14 +117,14 @@ int testAttributeValueChange()
         });
     }
   timer.mark();
-  for (int i = 0; i < 100000; ++i)
+  for (int i = 0; i < 1000000; ++i)
     att->findDouble("floatingPoint")->setValue(0, drand48());
   double deltaT3 = timer.elapsed();
-  std::cout << "1000 empty callbacks registered: " << deltaT3 << " (" << (deltaT3/1e5) << "/call)\n";
+  std::cout << "1000 empty callbacks registered: " << deltaT3 << " (" << (deltaT3/1e6) << "/call)\n";
 
   std::cout
-    << "Per-event overhead: " << (deltaT2/1e6) << "s/event\n"
-    << "Per-CB overhead: " << (deltaT3/1e5 - deltaT2/1e6)/1000. << "s/event/CB\n";
+    << "Per-event overhead: " << (deltaT2/1e7) << "s/event\n"
+    << "Per-CB overhead: " << (deltaT3/1e6 - deltaT2/1e7)/1000. << "s/event/CB\n";
 
   delete sys;
   return 0;
