@@ -102,7 +102,7 @@ struct SMTKCORE_EXPORT EventDataStorage
 
   smtk::attribute::System* m_system;
   smtk::attribute::AttributePtr m_attribute;
-  smtk::attribute::ItemPtr m_item;
+  const smtk::attribute::Item* m_item;
   smtk::attribute::ItemDefinitionPtr m_itemDefinition;
   smtk::attribute::DefinitionPtr m_definition;
   smtk::common::ViewPtr m_view;
@@ -155,6 +155,14 @@ public: \
   static void resetResponses() \
     { \
     s_responses.clear(); \
+    } \
+  void trigger() const \
+    { \
+    typename ResponderArray::const_iterator it; \
+    for (it = s_responses.begin(); it != s_responses.end(); ++it) \
+      { \
+      (*it)(*this); \
+      } \
     }
 
 #define SMTK_EVENT_RESPONDERS_IMPL(EVENTCLASS) \
@@ -210,17 +218,18 @@ public:
 
 /// An event triggered when an attribute's value is changed.
 template<typename T>
-class SMTKCORE_EXPORT ItemValueChangedEvent : public SystemEvent
+class SMTKCORE_EXPORT ItemValueChangedEvent : public EventData
 {
 public:
-  ItemValueChangedEvent(ConstItemPtr itm, int index, T oldValue);
+  ItemValueChangedEvent(const Item* itm, int index, T oldValue);
   int valueIndex() const { return this->m_storage->m_index; }
   T oldValue() const;
   T newValue() const;
-  AttributePtr attribute() const { return this->m_storage->m_attribute; }
-  DefinitionPtr definition() const { return this->m_storage->m_definition; }
-  ItemPtr item() const { return this->m_storage->m_item; }
-  ItemDefinitionPtr itemDefinition() const { return this->m_storage->m_itemDefinition; }
+  AttributePtr attribute() const { return this->m_storage->m_item->attribute(); }
+  System* system() const { return this->attribute()->system(); }
+  DefinitionPtr definition() const { return this->attribute()->definition(); }
+  ConstItemPtr item() const { return this->m_storage->m_item->pointer(); }
+  ItemDefinitionPtr itemDefinition() const { return this->m_storage->m_item->definition(); }
   SMTK_EVENT_RESPONDERS(ITEM_SET_VALUE,smtk::attribute::ItemValueChangedEvent<T>);
 };
 

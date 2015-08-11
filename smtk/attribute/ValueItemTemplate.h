@@ -167,8 +167,7 @@ namespace smtk {
 
         if (index != -1)
           {
-          ConstItemPtr self = this->pointer();
-          this->attribute()->system()->trigger(ItemValueChangedEvent<DataT>(self, element, val));
+          ItemValueChangedEvent<DataT>(this, element, val).trigger();
           this->m_discreteIndices[element] = index;
           this->m_values[element] = val;
           if (def->allowsExpressions())
@@ -189,8 +188,7 @@ namespace smtk {
         }
       if (def->isValueValid(val))
         {
-        ConstItemPtr self = this->pointer();
-        this->attribute()->system()->trigger(ItemValueChangedEvent<DataT>(self, element, val));
+        ItemValueChangedEvent<DataT>(this, element, val).trigger();
         this->m_values[element] = val;
         this->m_isSet[element] = true;
         return true;

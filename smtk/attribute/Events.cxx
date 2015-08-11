@@ -137,15 +137,11 @@ SystemAddDefinitionEvent::SystemAddDefinitionEvent(DefinitionPtr def)
 }
 
 template<>
-ItemValueChangedEvent<double>::ItemValueChangedEvent(ConstItemPtr itm, int index, double oldValue)
-  : SystemEvent(ItemValueChangedEvent<double>::type(), itm->attribute()->system())
+ItemValueChangedEvent<double>::ItemValueChangedEvent(const Item* itm, int index, double oldValue)
 {
   this->m_storage->m_index = index;
-  this->m_storage->m_item = smtk::const_pointer_cast<Item>(itm);
-  this->m_storage->m_attribute = itm->attribute();
-  this->m_storage->m_definition = this->attribute()->definition();
+  this->m_storage->m_item = itm;
   this->m_storage->m_floatValue[0] = oldValue;
-  //this->m_storage->m_itemDefinition = smtk::const_pointer_cast<Item>(itm)->definition();
 }
 
   } // namespace attribute
