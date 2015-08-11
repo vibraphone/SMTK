@@ -16,7 +16,10 @@
 
 #include "smtk/attribute/RefItem.h"
 #include "smtk/attribute/ValueItem.h"
+#include "smtk/attribute/Attribute.h"
+#include "smtk/attribute/System.h"
 #include "smtk/attribute/ValueItemDefinitionTemplate.h"
+#include "smtk/attribute/Events.h"
 #include <vector>
 #include <stdio.h>
 #include <sstream>
@@ -90,6 +93,13 @@ namespace smtk
     private:
     };
 
+  }  // namespace attribute
+}  // namespace smtk
+
+#include "smtk/attribute/Events.txx"
+
+namespace smtk {
+  namespace attribute {
 //----------------------------------------------------------------------------
     template<typename DataT>
     ValueItemTemplate<DataT>::ValueItemTemplate(Attribute *owningAttribute,
@@ -157,6 +167,8 @@ namespace smtk
 
         if (index != -1)
           {
+          ConstItemPtr self = this->pointer();
+          this->attribute()->system()->trigger(ItemValueChangedEvent<DataT>(self, element, val));
           this->m_discreteIndices[element] = index;
           this->m_values[element] = val;
           if (def->allowsExpressions())
@@ -177,6 +189,8 @@ namespace smtk
         }
       if (def->isValueValid(val))
         {
+        ConstItemPtr self = this->pointer();
+        this->attribute()->system()->trigger(ItemValueChangedEvent<DataT>(self, element, val));
         this->m_values[element] = val;
         this->m_isSet[element] = true;
         return true;

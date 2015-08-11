@@ -17,6 +17,7 @@ set(ioHeaders
   AttributeReader.h
   AttributeWriter.h
   ExportJSON.h
+  ExportJSON.txx
   ImportJSON.h
   Logger.h
   OperatorLog.h

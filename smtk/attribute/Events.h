@@ -114,6 +114,8 @@ struct SMTKCORE_EXPORT EventDataStorage
 
   EventDataStorage();
   EventDataStorage(smtk::attribute::System* sys);
+  template<typename T> void setValue(int idx, const T& val);
+  template<typename T> T valueOfType(int idx);
 };
 
 /**\brief A macro used to declare storage for responses to a particular event type.
@@ -156,7 +158,7 @@ public: \
     }
 
 #define SMTK_EVENT_RESPONDERS_IMPL(EVENTCLASS) \
-EVENTCLASS ::ResponderArray EVENTCLASS ::s_responses;
+EVENTCLASS ::ResponderArray EVENTCLASS ::s_responses
 
 /// A base struct for reporting events
 class SMTKCORE_EXPORT EventData
@@ -197,13 +199,29 @@ public:
   SMTK_EVENT_RESPONDERS(SYSTEM_DESTROYED,smtk::attribute::SystemDestroyedEvent);
 };
 
-/// An event triggered when adefinition is added to a system.
+/// An event triggered when a definition is added to a system.
 class SMTKCORE_EXPORT SystemAddDefinitionEvent : public SystemEvent
 {
 public:
   SystemAddDefinitionEvent(DefinitionPtr def);
   DefinitionPtr definition() const { return this->m_storage->m_definition; }
   SMTK_EVENT_RESPONDERS(SYSTEM_ADD_DEFINITION,smtk::attribute::SystemAddDefinitionEvent);
+};
+
+/// An event triggered when an attribute's value is changed.
+template<typename T>
+class SMTKCORE_EXPORT ItemValueChangedEvent : public SystemEvent
+{
+public:
+  ItemValueChangedEvent(ConstItemPtr itm, int index, T oldValue);
+  int valueIndex() const { return this->m_storage->m_index; }
+  T oldValue() const;
+  T newValue() const;
+  AttributePtr attribute() const { return this->m_storage->m_attribute; }
+  DefinitionPtr definition() const { return this->m_storage->m_definition; }
+  ItemPtr item() const { return this->m_storage->m_item; }
+  ItemDefinitionPtr itemDefinition() const { return this->m_storage->m_itemDefinition; }
+  SMTK_EVENT_RESPONDERS(ITEM_SET_VALUE,smtk::attribute::ItemValueChangedEvent<T>);
 };
 
 #if 0

@@ -8,6 +8,7 @@ set(attributeHeaders
   DoubleItem.h
   DoubleItemDefinition.h
   Events.h
+  Events.txx
   FileItem.h
   FileItemDefinition.h
   GroupItem.h

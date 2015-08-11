@@ -157,6 +157,8 @@ namespace smtk
                              smtk::attribute::Item::CopyInfo& info,
                              unsigned options);
 
+      template<typename F>
+      friend class ValueItemTemplate;
       /// Notify observer functions that \a event is about to occur or has occured (depending on context).
       template<typename T>
       void trigger(const T& event)

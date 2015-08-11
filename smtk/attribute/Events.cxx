@@ -9,6 +9,8 @@
 #include "smtk/attribute/DoubleItem.h"
 #include "smtk/attribute/IntItem.h"
 
+#include "smtk/attribute/Events.txx"
+
 #include <list>
 
 namespace smtk {
@@ -17,6 +19,10 @@ namespace smtk {
 SMTK_EVENT_RESPONDERS_IMPL(SystemCreatedEvent);
 SMTK_EVENT_RESPONDERS_IMPL(SystemDestroyedEvent);
 SMTK_EVENT_RESPONDERS_IMPL(SystemAddDefinitionEvent);
+// For some reason, we must assign a value to templated s_responses declarations or they are not instantiated by clang.
+template<> SMTK_EVENT_RESPONDERS_IMPL(ItemValueChangedEvent<double>) = ItemValueChangedEvent<double>::ResponderArray();
+template<> SMTK_EVENT_RESPONDERS_IMPL(ItemValueChangedEvent<int>) = ItemValueChangedEvent<int>::ResponderArray();
+template<> SMTK_EVENT_RESPONDERS_IMPL(ItemValueChangedEvent<std::string>) = ItemValueChangedEvent<std::string>::ResponderArray();
 
 typedef std::list<EventDataStorage> EventStorageList;
 static EventStorageList s_eventData;
@@ -59,6 +65,45 @@ EventDataStorage::EventDataStorage(smtk::attribute::System* sys)
 {
 }
 
+template<>
+void EventDataStorage::setValue<double>(int idx, const double& val)
+{
+  if (idx >= 0 && idx < 4)
+    this->m_floatValue[idx] = val;
+}
+
+template<>
+double EventDataStorage::valueOfType<double>(int idx)
+{
+  return (idx >= 0 && idx < 4) ? this->m_floatValue[idx] : 0.;
+}
+
+template<>
+void EventDataStorage::setValue<int>(int idx, const int& val)
+{
+  if (idx >= 0 && idx < 2)
+    this->m_intValue[idx] = val;
+}
+
+template<>
+int EventDataStorage::valueOfType<int>(int idx)
+{
+  return (idx >= 0 && idx < 2) ? this->m_intValue[idx] : 0;
+}
+
+template<>
+void EventDataStorage::setValue<std::string>(int idx, const std::string& val)
+{
+  if (idx >= 0 && idx < 2)
+    this->m_stringValue[idx] = val;
+}
+
+template<>
+std::string EventDataStorage::valueOfType<std::string>(int idx)
+{
+  return (idx >= 0 && idx < 2) ? this->m_stringValue[idx] : std::string();
+}
+
 EventData::EventData()
   : m_storage(findAndMarkStorage())
 {
@@ -89,6 +134,18 @@ SystemAddDefinitionEvent::SystemAddDefinitionEvent(DefinitionPtr def)
   : SystemEvent(SystemAddDefinitionEvent::type(), def->system())
 {
   this->m_storage->m_definition = def;
+}
+
+template<>
+ItemValueChangedEvent<double>::ItemValueChangedEvent(ConstItemPtr itm, int index, double oldValue)
+  : SystemEvent(ItemValueChangedEvent<double>::type(), itm->attribute()->system())
+{
+  this->m_storage->m_index = index;
+  this->m_storage->m_item = smtk::const_pointer_cast<Item>(itm);
+  this->m_storage->m_attribute = itm->attribute();
+  this->m_storage->m_definition = this->attribute()->definition();
+  this->m_storage->m_floatValue[0] = oldValue;
+  //this->m_storage->m_itemDefinition = smtk::const_pointer_cast<Item>(itm)->definition();
 }
 
   } // namespace attribute
