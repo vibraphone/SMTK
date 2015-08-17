@@ -44,3 +44,10 @@ void StringItem::copyFrom(ItemPtr sourceItem, CopyInfo& info)
   ValueItemTemplate<std::string>::copyFrom(sourceItem, info);
 }
 //----------------------------------------------------------------------------
+Simple::Signal<void(Item*, int, const std::string&)> StringItem::s_valueChangeObserver;
+
+template<>
+Simple::Signal<void(Item*, int, const std::string&)>& ValueItemTemplate<std::string>::valueChangeObserver()
+{
+  return StringItem::s_valueChangeObserver;
+}

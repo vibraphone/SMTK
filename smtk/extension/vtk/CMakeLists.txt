@@ -56,6 +56,7 @@ foreach(target
   vtkRenderingContext${VTK_RENDERING_BACKEND}
   vtkRendering${VTK_RENDERING_BACKEND}
   vtkRenderingVolume${VTK_RENDERING_BACKEND}
+  vtkIOMPIImage
   )
   if (TARGET ${target})
     list(APPEND SMTK_VTK_TARGET_LIST ${target})

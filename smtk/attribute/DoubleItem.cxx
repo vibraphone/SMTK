@@ -45,3 +45,10 @@ void DoubleItem::copyFrom(ItemPtr sourceItem, CopyInfo& info)
   ValueItemTemplate<double>::copyFrom(sourceItem, info);
 }
 //----------------------------------------------------------------------------
+Simple::Signal<void(Item*, int, const double&)> DoubleItem::s_valueChangeObserver;
+
+template<>
+Simple::Signal<void(Item*, int, const double&)>& ValueItemTemplate<double>::valueChangeObserver()
+{
+  return DoubleItem::s_valueChangeObserver;
+}

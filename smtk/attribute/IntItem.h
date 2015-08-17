@@ -34,8 +34,11 @@ namespace smtk
       virtual void copyFrom(const smtk::attribute::ItemPtr sourceItem,
                             smtk::attribute::Item::CopyInfo& info);
     protected:
+      friend class ValueItemTemplate<int>;
       IntItem(Attribute *owningAttribute, int itemPosition);
       IntItem(Item *owningItem, int myPosition, int mySubGroupPosition);
+
+      static Simple::Signal<void(Item*, int, const int&)> s_valueChangeObserver;
 
     private:
 

@@ -17,6 +17,9 @@
 #include "smtk/attribute/RefItem.h"
 #include "smtk/attribute/ValueItem.h"
 #include "smtk/attribute/ValueItemDefinitionTemplate.h"
+
+#include "simplesignal.h"
+
 #include <vector>
 #include <stdio.h>
 #include <sstream>
@@ -80,6 +83,8 @@ namespace smtk
                             smtk::attribute::Item::CopyInfo& info);
       shared_ptr<const DefType> concreteDefinition() const
         { return dynamic_pointer_cast<const DefType>(this->definition()); }
+
+      static Simple::Signal<void(Item*, int, const DataT&)>& valueChangeObserver();
     protected:
       ValueItemTemplate(Attribute *owningAttribute, int itemPosition);
       ValueItemTemplate(Item *owningItem, int myPosition, int mySubGroupPosition);
@@ -157,6 +162,7 @@ namespace smtk
 
         if (index != -1)
           {
+          valueChangeObserver().emit(this, element, val);
           this->m_discreteIndices[element] = index;
           this->m_values[element] = val;
           if (def->allowsExpressions())
@@ -177,6 +183,7 @@ namespace smtk
         }
       if (def->isValueValid(val))
         {
+        valueChangeObserver().emit(this, element, val);
         this->m_values[element] = val;
         this->m_isSet[element] = true;
         return true;

@@ -398,6 +398,7 @@ include_directories(
   "${SPARSEHASH_INCLUDE_DIRS}"
   "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/cJSON"
   "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/pugixml"
+  "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/simplesignal"
   "${Boost_INCLUDE_DIRS}"
 )
 
