@@ -30,7 +30,7 @@ using namespace smtk::attribute;
 //----------------------------------------------------------------------------
 System::System()
 {
-  this->trigger(SystemCreatedEvent(this));
+  SystemCreatedEvent(this).emit();
 }
 
 //----------------------------------------------------------------------------
@@ -42,7 +42,7 @@ System::~System()
     // Decouple all defintions from this system
     (*it).second->clearSystem();
     }
-  this->trigger(SystemDestroyedEvent(this));
+  SystemDestroyedEvent(this).emit();
  }
 
 //----------------------------------------------------------------------------
@@ -80,7 +80,7 @@ System::createDefinition(const std::string &typeName,
     // Need to add this new definition to the list of derived defs
     this->m_derivedDefInfo[def].insert(newDef);
     }
-  this->trigger(SystemAddDefinitionEvent(newDef));
+  SystemAddDefinitionEvent(newDef).emit();
   return newDef;
 }
 
@@ -104,7 +104,7 @@ System::createDefinition(const std::string &typeName,
     // Need to add this new definition to the list of derived defs
     this->m_derivedDefInfo[baseDef].insert(newDef);
     }
-  this->trigger(SystemAddDefinitionEvent(newDef));
+  SystemAddDefinitionEvent(newDef).emit();
   return newDef;
 }
 
@@ -128,7 +128,7 @@ smtk::attribute::AttributePtr System::createAttribute(const std::string &name,
   this->m_attributeClusters[def->type()].insert(a);
   this->m_attributes[name] = a;
   this->m_attributeIdMap[a->id()] = a;
-  //this->trigger(SystemAddAttributeEvent(a));
+  //SystemAddAttributeEvent(a).emit();
   return a;
 }
 
@@ -190,7 +190,7 @@ System::createAttribute(const std::string &name,
   this->m_attributeClusters[def->type()].insert(a);
   this->m_attributes[name] = a;
   this->m_attributeIdMap[id] = a;
-  //this->trigger(SystemAddAttributeEvent(a));
+  //SystemAddAttributeEvent(a).emit();
   return a;
 }
 //----------------------------------------------------------------------------
@@ -217,7 +217,7 @@ System::createAttribute(const std::string &name,
   this->m_attributeClusters[typeName].insert(a);
   this->m_attributes[name] = a;
   this->m_attributeIdMap[id] = a;
-  //this->trigger(SystemAddAttributeEvent(a));
+  //SystemAddAttributeEvent(a).emit();
   return a;
 }
 //----------------------------------------------------------------------------
@@ -228,7 +228,7 @@ bool System::removeAttribute(smtk::attribute::AttributePtr att)
     {
     return false;
     }
-  //this->trigger(SystemDelAttributeEvent(att));
+  //SystemDelAttributeEvent(att).emit();
   this->m_attributes.erase(att->name());
   this->m_attributeIdMap.erase(att->id());
   this->m_attributeClusters[att->type()].erase(att);

@@ -159,15 +159,6 @@ namespace smtk
 
       template<typename F>
       friend class ValueItemTemplate;
-      /// Notify observer functions that \a event is about to occur or has occured (depending on context).
-      template<typename T>
-      void trigger(const T& event)
-        {
-        const typename T::ResponderArray& responders(T::responses());
-        typename T::ResponderArray::const_iterator resp;
-        for (resp = responders.begin(); resp != responders.end(); ++resp)
-          (*resp)(event);
-        }
 
       std::map<std::string, smtk::attribute::DefinitionPtr> m_definitions;
       std::map<std::string, std::set<smtk::attribute::AttributePtr> > m_attributeClusters;

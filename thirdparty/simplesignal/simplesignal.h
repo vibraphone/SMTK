@@ -157,6 +157,10 @@ public:
   /// ProtoSignal destructor releases all resources associated with this signal.
   ~ProtoSignal ()
   {
+    this->reset();
+  }
+  void reset()
+  {
     if (callback_ring_)
       {
         while (callback_ring_->next != callback_ring_)
@@ -164,7 +168,30 @@ public:
         assert (callback_ring_->ref_count >= 2);
         callback_ring_->decref();
         callback_ring_->decref();
+        callback_ring_ = NULL;
       }
+  }
+  bool empty() const
+  {
+    if (!callback_ring_)
+      return true;
+
+    SignalLink *link = callback_ring_;
+    link->incref();
+    do
+      {
+        if (link->function != NULL)
+          {
+            return false;
+          }
+        SignalLink *old = link;
+        link = old->next;
+        link->incref();
+        old->decref();
+      }
+    while (link != callback_ring_);
+    link->decref();
+    return true;
   }
   /// Operator to add a new function or lambda as signal handler, returns a handler connection ID.
   size_t operator+= (const CbFunction &cb)      { ensure_ring(); return callback_ring_->add_before (cb); }

@@ -15,6 +15,8 @@
 #include "smtk/CoreExports.h" // for SMTKCORE_EXPORT
 #include "smtk/Function.h" // for set<smtk::function<EventData> >
 
+#include "simplesignal/simplesignal.h"
+
 #include <string>
 #include <vector>
 #include <utility> // for std::pair
@@ -128,45 +130,26 @@ struct SMTKCORE_EXPORT EventDataStorage
   */
 #define SMTK_EVENT_RESPONDERS(EVENTENUM,EVENTCLASS) \
 public: \
-  /*typedef void (*Response)( const EVENTCLASS & );*/ \
-  typedef smtk::function<void(const EVENTCLASS &)> Responder; \
-  typedef std::vector<Responder> ResponderArray; \
+  typedef smtk::function<void(const EVENTCLASS *)> Responder; \
+  typedef simple::Signal<void(const EVENTCLASS *)> SignalType; \
 protected: \
-  static ResponderArray s_responses; \
+  static SignalType s_signal; \
 public: \
   static EventChangeType type() \
     { \
     return EVENTENUM; \
     } \
-  static const EVENTCLASS ::ResponderArray& responses() \
+  static EVENTCLASS ::SignalType& responses() \
     { \
-    return s_responses; \
+    return s_signal; \
     } \
-  static std::size_t addResponse(Responder r) \
+  void emit() const \
     { \
-    std::size_t idx = s_responses.size(); \
-    s_responses.push_back(r); \
-    return idx; \
-    } \
-  static void removeResponse(std::size_t idx) \
-    { \
-    s_responses.erase(s_responses.begin() + idx); \
-    } \
-  static void resetResponses() \
-    { \
-    s_responses.clear(); \
-    } \
-  void trigger() const \
-    { \
-    typename ResponderArray::const_iterator it; \
-    for (it = s_responses.begin(); it != s_responses.end(); ++it) \
-      { \
-      (*it)(*this); \
-      } \
+    s_signal.emit(this); \
     }
 
 #define SMTK_EVENT_RESPONDERS_IMPL(EVENTCLASS) \
-EVENTCLASS ::ResponderArray EVENTCLASS ::s_responses
+EVENTCLASS ::SignalType EVENTCLASS ::s_signal
 
 /// A base struct for reporting events
 class SMTKCORE_EXPORT EventData
@@ -230,6 +213,7 @@ public:
   DefinitionPtr definition() const { return this->attribute()->definition(); }
   ConstItemPtr item() const { return this->m_storage->m_item->pointer(); }
   ItemDefinitionPtr itemDefinition() const { return this->m_storage->m_item->definition(); }
+  const Item* rawItem() const { return this->m_storage->m_item; }
   SMTK_EVENT_RESPONDERS(ITEM_SET_VALUE,smtk::attribute::ItemValueChangedEvent<T>);
 };
 
@@ -261,7 +245,7 @@ struct SMTKCORE_EXPORT DefinitionEvent : public SystemEvent
 {
   DefinitionEvent(DefinitionPtr def);
   DefinitionPtr definition() const { return this->m_storage->m_definition; }
-}; 
+};
 
 struct SMTKCORE_EXPORT DefinitionAddItemDefinitionEvent : public DefinitionEvent
 {
@@ -357,6 +341,8 @@ class Attribute {
 };
 attribute->observe(ATTRIBUTE_SET_NAME, ...);
 #endif // 0
+template<typename T>
+typename ItemValueChangedEvent<T>::SignalType ItemValueChangedEvent<T>::s_signal;
 
   } // namespace attribute
 } // namespace smtk

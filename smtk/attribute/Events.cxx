@@ -19,10 +19,10 @@ namespace smtk {
 SMTK_EVENT_RESPONDERS_IMPL(SystemCreatedEvent);
 SMTK_EVENT_RESPONDERS_IMPL(SystemDestroyedEvent);
 SMTK_EVENT_RESPONDERS_IMPL(SystemAddDefinitionEvent);
-// For some reason, we must assign a value to templated s_responses declarations or they are not instantiated by clang.
-template<> SMTK_EVENT_RESPONDERS_IMPL(ItemValueChangedEvent<double>) = ItemValueChangedEvent<double>::ResponderArray();
-template<> SMTK_EVENT_RESPONDERS_IMPL(ItemValueChangedEvent<int>) = ItemValueChangedEvent<int>::ResponderArray();
-template<> SMTK_EVENT_RESPONDERS_IMPL(ItemValueChangedEvent<std::string>) = ItemValueChangedEvent<std::string>::ResponderArray();
+// Compilers should not require us to declare ItemValueChangedEvent<T>::s_responses:
+// template<> SMTK_EVENT_RESPONDERS_IMPL(ItemValueChangedEvent<double>);
+// template<> SMTK_EVENT_RESPONDERS_IMPL(ItemValueChangedEvent<int>);
+// template<> SMTK_EVENT_RESPONDERS_IMPL(ItemValueChangedEvent<std::string>);
 
 typedef std::list<EventDataStorage> EventStorageList;
 static EventStorageList s_eventData;

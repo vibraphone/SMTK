@@ -83,6 +83,17 @@ namespace smtk
                             smtk::attribute::Item::CopyInfo& info);
       shared_ptr<const DefType> concreteDefinition() const
         { return dynamic_pointer_cast<const DefType>(this->definition()); }
+
+      template<typename Event>
+      std::size_t connect(smtk::function<void(const Event*)> fn)
+        {
+        const Item* self = this;
+        return Event::responses() += [self, fn](const Event* event)
+          {
+          if (self == event->rawItem())
+            fn(event);
+          };
+        }
     protected:
       ValueItemTemplate(Attribute *owningAttribute, int itemPosition);
       ValueItemTemplate(Item *owningItem, int myPosition, int mySubGroupPosition);
@@ -167,7 +178,7 @@ namespace smtk {
 
         if (index != -1)
           {
-          ItemValueChangedEvent<DataT>(this, element, val).trigger();
+          ItemValueChangedEvent<DataT>(this, element, val).emit();
           this->m_discreteIndices[element] = index;
           this->m_values[element] = val;
           if (def->allowsExpressions())
@@ -188,7 +199,7 @@ namespace smtk {
         }
       if (def->isValueValid(val))
         {
-        ItemValueChangedEvent<DataT>(this, element, val).trigger();
+        ItemValueChangedEvent<DataT>(this, element, val).emit();
         this->m_values[element] = val;
         this->m_isSet[element] = true;
         return true;
