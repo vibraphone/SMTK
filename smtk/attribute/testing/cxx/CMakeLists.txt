@@ -13,6 +13,7 @@ set(attributeTests
   attributeAutoNamingTest
   attributeReferencingTest
   categoryTest
+  unitAttributeEvents3
 )
 set(basicAttributeXMLWriterTest_ARGS
   "${CMAKE_BINARY_DIR}/Testing/Temporary/basicAttributeXMLWriterTest.xml"
@@ -20,7 +21,7 @@ set(basicAttributeXMLWriterTest_ARGS
 set(childrenItemsTest_ARGS "dummy.sbi")
 foreach(tst ${attributeTests})
   add_executable(${tst} ${tst}.cxx)
-  target_link_libraries(${tst} smtkCore)
+  target_link_libraries(${tst} smtkCore smtkCoreModelTesting)
   add_test(NAME ${tst} COMMAND ${tst} ${${tst}_ARGS})
 endforeach()
 
