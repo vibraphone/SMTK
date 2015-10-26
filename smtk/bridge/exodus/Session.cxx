@@ -23,7 +23,9 @@
 #include "vtkInformation.h"
 #include "vtkInformationIntegerKey.h"
 #include "vtkInformationIntegerVectorKey.h"
+#include "vtkInformationObjectBaseVectorKey.h"
 #include "vtkInformationStringKey.h"
+#include "vtkInformationDoubleKey.h"
 #include "vtkPoints.h"
 #include "vtkPolyData.h"
 #include "vtkUnsignedIntArray.h"
@@ -40,6 +42,8 @@ vtkInformationKeyMacro(Session,SMTK_VISIBILITY,Integer);
 vtkInformationKeyMacro(Session,SMTK_GROUP_TYPE,Integer);
 vtkInformationKeyMacro(Session,SMTK_PEDIGREE,Integer);
 vtkInformationKeyMacro(Session,SMTK_UUID_KEY,String);
+vtkInformationKeyMacro(Session,SMTK_CHILDREN,ObjectBaseVector);
+vtkInformationKeyMacro(Session,SMTK_SEGMENT_VALUE,Double);
 
 enum smtkCellTessRole {
   SMTK_ROLE_VERTS,
@@ -80,7 +84,7 @@ EntityHandle::EntityHandle(int emod, vtkDataObject* obj, Session* sess)
 }
 
 /// Construct a possibly-valid handle (of a non-top-level entity).
-EntityHandle::EntityHandle(int emod, vtkDataObject* obj, vtkMultiBlockDataSet* parent, int idxInParent, Session* sess)
+EntityHandle::EntityHandle(int emod, vtkDataObject* obj, vtkDataObject* parent, int idxInParent, Session* sess)
   : m_modelNumber(emod), m_object(obj), m_session(sess)
 {
   if (sess && obj && parent && idxInParent > 0)
@@ -534,13 +538,13 @@ size_t Session::numberOfModels() const
 }
 
 /// Return the model owning the given handle, \a h.
-vtkMultiBlockDataSet* Session::modelOfHandle(const EntityHandle& h) const
+vtkDataObject* Session::modelOfHandle(const EntityHandle& h) const
 {
   return (h.isValid() ? this->m_models[h.modelNumber()] : NULL);
 }
 
 /// Return the parent dataset of \a obj.
-vtkMultiBlockDataSet* Session::parent(vtkDataObject* obj) const
+vtkDataObject* Session::parent(vtkDataObject* obj) const
 {
   ChildParentMap_t::const_iterator it = this->m_cpMap.find(obj);
   if (it == this->m_cpMap.end())
@@ -559,7 +563,7 @@ int Session::parentIndex(vtkDataObject* obj) const
   return it->second.second;
 }
 
-bool Session::ensureChildParentMapEntry(vtkDataObject* child, vtkMultiBlockDataSet* parent, int idxInParent)
+bool Session::ensureChildParentMapEntry(vtkDataObject* child, vtkDataObject* parent, int idxInParent)
 {
   return this->m_cpMap.insert(ChildParentMap_t::value_type(child, ParentAndIndex_t(parent, idxInParent))).second;
 }

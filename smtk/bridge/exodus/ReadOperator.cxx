@@ -23,8 +23,14 @@
 
 #include "vtkExodusIIReader.h"
 #include "vtkSLACReader.h"
+#include "vtkXMLImageDataReader.h"
+#include "vtkMultiThreshold.h"
 #include "vtkFieldData.h"
 #include "vtkDataArray.h"
+#include "vtkDataSetAttributes.h"
+#include "vtkPointData.h"
+#include "vtkUnsignedCharArray.h"
+#include "vtkImageData.h"
 #include "vtkStringArray.h"
 #include "vtkInformation.h"
 
@@ -53,6 +59,8 @@ smtk::model::OperatorResult ReadOperator::operateInternal()
     std::string ext = path(filename).extension().string();
     if (ext == ".nc" || ext == ".ncdf")
       filetype = "slac";
+    else if (ext == ".vti")
+      filetype = "segmented";
     else if (ext == ".exo" || ext == ".g" || ext == ".ex2" || ext == ".exii")
       filetype = "exodus";
     }
@@ -62,6 +70,8 @@ smtk::model::OperatorResult ReadOperator::operateInternal()
 
   if (filetype == "slac")
     return this->readSLAC();
+  else if (filetype == "segmented")
+    return this->readSegmented();
 
   // The default is to assume it is an Exodus file:
   return this->readExodus();
@@ -265,6 +275,130 @@ smtk::model::OperatorResult ReadOperator::readSLAC()
     brdg->addModel(modelOut);
   smtkModelOut.setStringProperty("url", filename);
   smtkModelOut.setStringProperty("type", "slac");
+
+  // Now set model for session and transcribe everything.
+  smtk::model::OperatorResult result = this->createResult(
+    smtk::model::OPERATION_SUCCEEDED);
+  smtk::attribute::ModelEntityItem::Ptr resultModels =
+    result->findModelEntity("model");
+  resultModels->setValue(smtkModelOut);
+  smtk::attribute::ModelEntityItem::Ptr created =
+    result->findModelEntity("created");
+  created->setNumberOfValues(1);
+  created->setValue(smtkModelOut);
+  created->setIsEnabled(true);
+
+  return result;
+}
+
+int DiscoverLabels(vtkDataSet* obj, std::string& labelname, std::set<double>& segmentLabels)
+{
+  if (!obj)
+    return 0;
+
+  vtkDataSetAttributes* dsa = obj->GetPointData();
+  vtkIdType card = obj->GetNumberOfPoints();
+
+  if (card < 1 || !dsa)
+    return 0;
+
+  vtkDataArray* labelArray;
+  if (labelname.empty())
+    {
+    labelArray = dsa->GetScalars();
+    }
+  else
+    {
+    labelArray = dsa->GetArray(labelname.c_str());
+    if (!labelArray)
+      {
+      labelArray = dsa->GetScalars();
+      }
+    }
+
+  if (!labelArray)
+    { // No scalars or array of the given name? Create one.
+    vtkNew<vtkUnsignedCharArray> arr;
+    arr->SetName(labelname.empty() ? "label map" : labelname.c_str());
+    labelname = arr->GetName(); // Upon output, labelname must be valid
+    arr->SetNumberOfTuples(card);
+    arr->FillComponent(0, 0.0);
+    dsa->SetScalars(arr.GetPointer());
+
+    segmentLabels.insert(0.0); // We have one label. It is zero.
+    return 1;
+    }
+
+  labelname = labelArray->GetName();
+  for (vtkIdType i = 0; i < card; ++i)
+    {
+    segmentLabels.insert(labelArray->GetTuple1(i));
+    }
+  return segmentLabels.size();
+}
+
+smtk::model::OperatorResult ReadOperator::readSegmented()
+{
+  smtk::attribute::FileItem::Ptr filenameItem =
+    this->specification()->findFile("filename");
+
+  smtk::attribute::StringItem::Ptr labelItem =
+    this->specification()->findString("label map");
+
+  std::string filename = filenameItem->value();
+  std::string labelname = labelItem->value();
+  if (labelname.empty())
+    labelname = "label map";
+
+  vtkNew<vtkXMLImageDataReader> rdr;
+  rdr->SetFileName(filenameItem->value(0).c_str());
+
+  // Read in the data and discover the labels:
+  rdr->Update();
+  vtkNew<vtkImageData> img;
+  img->ShallowCopy(rdr->GetOutput());
+  std::set<double> segmentLabels;
+  int numLabels = DiscoverLabels(img.GetPointer(), labelname, segmentLabels);
+  // Upon exit, labelname will be a point-data array in img.
+
+  // Prepare the children of the image (holding thresholded data)
+  vtkNew<vtkMultiThreshold> thresh;
+  std::vector<int>    segmentData(numLabels);
+  std::vector<double> segmentVals(numLabels);
+  int i = 0;
+  for (std::set<double>::iterator it = segmentLabels.begin(); it != segmentLabels.end(); ++it, ++i)
+    {
+    segmentData[i] = *it;
+    int setId = thresh->AddIntervalSet(
+      *it, *it, vtkMultiThreshold::CLOSED, vtkMultiThreshold::CLOSED,
+      vtkDataObject::FIELD_ASSOCIATION_POINTS, labelname.c_str(),
+      /* component */ 0, /* allScalars */ 1);
+    segmentVals[i] = thresh->OutputSet(setId);
+    }
+  thresh->Update();
+
+  vtkSmartPointer<vtkMultiBlockDataSet> modelOut =
+    vtkSmartPointer<vtkMultiBlockDataSet>::New();
+
+  modelOut->SetNumberOfBlocks(1);
+  modelOut->SetBlock(0, img.GetPointer());
+
+  int imgDim = img->GetDataDimension();
+  MarkMeshInfo(modelOut.GetPointer(), imgDim, path(filename).stem().c_str(), EXO_MODEL, -1);
+  MarkMeshInfo(img.GetPointer(), imgDim, labelname.c_str(), EXO_LABEL_MAP, -1);
+  vtkMultiBlockDataSet* mbds = thresh->GetOutput();
+  for (int i = 0; i < numLabels; ++i)
+    {
+    std::ostringstream cname;
+    cname << "label " << i << " (" << segmentData[i] << ")";
+    MarkMeshInfo(mbds->GetBlock(segmentVals[i]), imgDim, cname.str().c_str(), EXO_LABEL, -1);
+    }
+
+  Session* brdg = this->exodusSession();
+  smtk::model::Model smtkModelOut =
+    brdg->addModel(modelOut);
+  smtkModelOut.setStringProperty("url", filename);
+  smtkModelOut.setStringProperty("type", "segmented");
 
   // Now set model for session and transcribe everything.
   smtk::model::OperatorResult result = this->createResult(
