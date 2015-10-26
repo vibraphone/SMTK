@@ -134,7 +134,7 @@ public:
   static vtkInformationIntegerKey* SMTK_PEDIGREE();
   static vtkInformationStringKey* SMTK_UUID_KEY();
   static vtkInformationObjectBaseVectorKey* SMTK_CHILDREN();
-  static vtkInformationDoubleKey* SMTK_SEGMENT_VALUE();
+  static vtkInformationDoubleKey* SMTK_LABEL_VALUE();
 
   smtk::model::Model addModel(vtkSmartPointer<vtkMultiBlockDataSet>& model);
 

@@ -43,7 +43,7 @@ vtkInformationKeyMacro(Session,SMTK_GROUP_TYPE,Integer);
 vtkInformationKeyMacro(Session,SMTK_PEDIGREE,Integer);
 vtkInformationKeyMacro(Session,SMTK_UUID_KEY,String);
 vtkInformationKeyMacro(Session,SMTK_CHILDREN,ObjectBaseVector);
-vtkInformationKeyMacro(Session,SMTK_SEGMENT_VALUE,Double);
+vtkInformationKeyMacro(Session,SMTK_LABEL_VALUE,Double);
 
 enum smtkCellTessRole {
   SMTK_ROLE_VERTS,
@@ -65,6 +65,10 @@ std::string EntityTypeNameString(EntityType etype)
   case EXO_BLOCKS:    return "element blocks";
   case EXO_SIDE_SETS: return "side sets";
   case EXO_NODE_SETS: return "node sets";
+
+  case EXO_LABEL_MAP: return "label map";
+  case EXO_LABEL:     return "label";
+
   default: break;
     }
   return "invalid";
@@ -274,6 +278,8 @@ SessionInfoBits Session::transcribeInternal(
       mutableEntityRef.setIntegerProperty(
         SMTK_GEOM_STYLE_PROP, smtk::model::DISCRETE);
       break;
+    case EXO_LABEL_MAP:
+    case EXO_LABEL:
     case EXO_BLOCK:
       entityDimBits = Entity::dimensionToDimensionBits(dim);
       mutableEntityRef.manager()->insertGroup(
@@ -412,6 +418,18 @@ SessionInfoBits Session::transcribeInternal(
     case EXO_SIDE_SETS:
       mutableEntityRef.setStringProperty("_simple type", "side set collection");
       break;
+
+    case EXO_LABEL:
+      mutableEntityRef.setStringProperty("_simple type", "label");
+      mutableEntityRef.as<smtk::model::Group>().setMembershipMask(DIMENSION_3 | MODEL_DOMAIN);
+      mutableEntityRef.setIntegerProperty("pedigree id", handle.pedigree());
+      break;
+    case EXO_LABEL_MAP:
+      mutableEntityRef.setStringProperty("_simple type", "label map");
+      mutableEntityRef.as<smtk::model::Group>().setMembershipMask(DIMENSION_3 | MODEL_DOMAIN);
+      mutableEntityRef.setIntegerProperty("pedigree id", handle.pedigree());
+      break;
+
     case EXO_MODEL:
       mutableEntityRef.setStringProperty("_simple type", "file");
       break;
@@ -506,6 +524,10 @@ bool Session::addTessellation(
 
   if (vtkMultiBlockDataSet::SafeDownCast(data))
     return false; // Don't try to tessellate parent groups of leaf nodes.
+
+  // Don't tessellate image data that is serving as a label map.
+  if (data->GetInformation()->Get(SMTK_GROUP_TYPE()) == EXO_LABEL_MAP)
+    return false;
 
   vtkNew<vtkGeometryFilter> bdyFilter;
   bdyFilter->MergingOff();

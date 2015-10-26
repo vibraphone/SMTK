@@ -25,6 +25,7 @@
 #include "vtkSLACReader.h"
 #include "vtkXMLImageDataReader.h"
 #include "vtkMultiThreshold.h"
+#include "vtkThreshold.h"
 #include "vtkFieldData.h"
 #include "vtkDataArray.h"
 #include "vtkDataSetAttributes.h"
@@ -33,6 +34,7 @@
 #include "vtkImageData.h"
 #include "vtkStringArray.h"
 #include "vtkInformation.h"
+#include "vtkUnstructuredGrid.h"
 
 #include "boost/filesystem.hpp"
 
@@ -357,23 +359,34 @@ smtk::model::OperatorResult ReadOperator::readSegmented()
   rdr->Update();
   vtkNew<vtkImageData> img;
   img->ShallowCopy(rdr->GetOutput());
+  int imgDim = img->GetDataDimension();
   std::set<double> segmentLabels;
   int numLabels = DiscoverLabels(img.GetPointer(), labelname, segmentLabels);
   // Upon exit, labelname will be a point-data array in img.
 
   // Prepare the children of the image (holding thresholded data)
-  vtkNew<vtkMultiThreshold> thresh;
-  std::vector<int>    segmentData(numLabels);
-  std::vector<double> segmentVals(numLabels);
+  vtkNew<vtkThreshold> thresh;
+  vtkInformation* info = img->GetInformation();
+  Session::SMTK_CHILDREN()->Resize(info, numLabels);
   int i = 0;
+  thresh->SetInputDataObject(0, img.GetPointer());
+  thresh->SetInputArrayToProcess(
+    0, 0, 0, vtkDataObject::FIELD_ASSOCIATION_POINTS, labelname.c_str());
+  thresh->SetComponentModeToUseSelected();
+  thresh->SetSelectedComponent(0);
+  thresh->SetAllScalars(1);
   for (std::set<double>::iterator it = segmentLabels.begin(); it != segmentLabels.end(); ++it, ++i)
     {
-    segmentData[i] = *it;
-    int setId = thresh->AddIntervalSet(
-      *it, *it, vtkMultiThreshold::CLOSED, vtkMultiThreshold::CLOSED,
-      vtkDataObject::FIELD_ASSOCIATION_POINTS, labelname.c_str(),
-      /* component */ 0, /* allScalars */ 1);
-    segmentVals[i] = thresh->OutputSet(setId);
+    thresh->ThresholdBetween(*it, *it);
+    thresh->Update();
+    vtkNew<vtkUnstructuredGrid> childData;
+    childData->ShallowCopy(thresh->GetOutput());
+    Session::SMTK_CHILDREN()->Set(info, childData.GetPointer(), i);
+    childData->GetInformation()->Set(Session::SMTK_LABEL_VALUE(), *it);
+
+    std::ostringstream cname;
+    cname << "label " << i << " (" << *it << ")";
+    MarkMeshInfo(childData.GetPointer(), imgDim, cname.str().c_str(), EXO_LABEL, int(*it));
     }
   thresh->Update();
 
@@ -383,9 +396,9 @@ smtk::model::OperatorResult ReadOperator::readSegmented()
   modelOut->SetNumberOfBlocks(1);
   modelOut->SetBlock(0, img.GetPointer());
 
-  int imgDim = img->GetDataDimension();
   MarkMeshInfo(modelOut.GetPointer(), imgDim, path(filename).stem().c_str(), EXO_MODEL, -1);
   MarkMeshInfo(img.GetPointer(), imgDim, labelname.c_str(), EXO_LABEL_MAP, -1);
+  /*
   vtkMultiBlockDataSet* mbds = thresh->GetOutput();
   for (int i = 0; i < numLabels; ++i)
     {
@@ -393,6 +406,7 @@ smtk::model::OperatorResult ReadOperator::readSegmented()
     cname << "label " << i << " (" << segmentData[i] << ")";
     MarkMeshInfo(mbds->GetBlock(segmentVals[i]), imgDim, cname.str().c_str(), EXO_LABEL, -1);
     }
+    */
 
   Session* brdg = this->exodusSession();
   smtk::model::Model smtkModelOut =
