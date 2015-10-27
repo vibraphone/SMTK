@@ -62,7 +62,7 @@ smtk::model::OperatorResult ReadOperator::operateInternal()
     if (ext == ".nc" || ext == ".ncdf")
       filetype = "slac";
     else if (ext == ".vti")
-      filetype = "segmented";
+      filetype = "label map";
     else if (ext == ".exo" || ext == ".g" || ext == ".ex2" || ext == ".exii")
       filetype = "exodus";
     }
@@ -72,8 +72,8 @@ smtk::model::OperatorResult ReadOperator::operateInternal()
 
   if (filetype == "slac")
     return this->readSLAC();
-  else if (filetype == "segmented")
-    return this->readSegmented();
+  else if (filetype == "label map")
+    return this->readLabelMap();
 
   // The default is to assume it is an Exodus file:
   return this->readExodus();
@@ -293,7 +293,7 @@ smtk::model::OperatorResult ReadOperator::readSLAC()
   return result;
 }
 
-int DiscoverLabels(vtkDataSet* obj, std::string& labelname, std::set<double>& segmentLabels)
+int DiscoverLabels(vtkDataSet* obj, std::string& labelname, std::set<double>& labelSet)
 {
   if (!obj)
     return 0;
@@ -327,19 +327,19 @@ int DiscoverLabels(vtkDataSet* obj, std::string& labelname, std::set<double>& se
     arr->FillComponent(0, 0.0);
     dsa->SetScalars(arr.GetPointer());
 
-    segmentLabels.insert(0.0); // We have one label. It is zero.
+    labelSet.insert(0.0); // We have one label. It is zero.
     return 1;
     }
 
   labelname = labelArray->GetName();
   for (vtkIdType i = 0; i < card; ++i)
     {
-    segmentLabels.insert(labelArray->GetTuple1(i));
+    labelSet.insert(labelArray->GetTuple1(i));
     }
-  return segmentLabels.size();
+  return labelSet.size();
 }
 
-smtk::model::OperatorResult ReadOperator::readSegmented()
+smtk::model::OperatorResult ReadOperator::readLabelMap()
 {
   smtk::attribute::FileItem::Ptr filenameItem =
     this->specification()->findFile("filename");
@@ -360,8 +360,8 @@ smtk::model::OperatorResult ReadOperator::readSegmented()
   vtkNew<vtkImageData> img;
   img->ShallowCopy(rdr->GetOutput());
   int imgDim = img->GetDataDimension();
-  std::set<double> segmentLabels;
-  int numLabels = DiscoverLabels(img.GetPointer(), labelname, segmentLabels);
+  std::set<double> labelSet;
+  int numLabels = DiscoverLabels(img.GetPointer(), labelname, labelSet);
   // Upon exit, labelname will be a point-data array in img.
 
   // Prepare the children of the image (holding thresholded data)
@@ -375,7 +375,7 @@ smtk::model::OperatorResult ReadOperator::readSegmented()
   thresh->SetComponentModeToUseSelected();
   thresh->SetSelectedComponent(0);
   thresh->SetAllScalars(1);
-  for (std::set<double>::iterator it = segmentLabels.begin(); it != segmentLabels.end(); ++it, ++i)
+  for (std::set<double>::iterator it = labelSet.begin(); it != labelSet.end(); ++it, ++i)
     {
     thresh->ThresholdBetween(*it, *it);
     thresh->Update();
@@ -403,8 +403,8 @@ smtk::model::OperatorResult ReadOperator::readSegmented()
   for (int i = 0; i < numLabels; ++i)
     {
     std::ostringstream cname;
-    cname << "label " << i << " (" << segmentData[i] << ")";
-    MarkMeshInfo(mbds->GetBlock(segmentVals[i]), imgDim, cname.str().c_str(), EXO_LABEL, -1);
+    cname << "label " << i << " (" << labelSet] << ")";
+    MarkMeshInfo(mbds->GetBlock(labelSet]), imgDim, cname.str().c_str(), EXO_LABEL, -1);
     }
     */
 
@@ -412,7 +412,7 @@ smtk::model::OperatorResult ReadOperator::readSegmented()
   smtk::model::Model smtkModelOut =
     brdg->addModel(modelOut);
   smtkModelOut.setStringProperty("url", filename);
-  smtkModelOut.setStringProperty("type", "segmented");
+  smtkModelOut.setStringProperty("type", "label map");
 
   // Now set model for session and transcribe everything.
   smtk::model::OperatorResult result = this->createResult(
