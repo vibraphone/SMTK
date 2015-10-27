@@ -24,7 +24,7 @@
 #include "vtkExodusIIReader.h"
 #include "vtkSLACReader.h"
 #include "vtkXMLImageDataReader.h"
-#include "vtkMultiThreshold.h"
+#include "vtkContourFilter.h"
 #include "vtkThreshold.h"
 #include "vtkFieldData.h"
 #include "vtkDataArray.h"
@@ -364,31 +364,33 @@ smtk::model::OperatorResult ReadOperator::readLabelMap()
   int numLabels = DiscoverLabels(img.GetPointer(), labelname, labelSet);
   // Upon exit, labelname will be a point-data array in img.
 
-  // Prepare the children of the image (holding thresholded data)
-  vtkNew<vtkThreshold> thresh;
+  // Prepare the children of the image (holding contour data)
+  vtkNew<vtkContourFilter> bdyFilt;
   vtkInformation* info = img->GetInformation();
   Session::SMTK_CHILDREN()->Resize(info, numLabels);
   int i = 0;
-  thresh->SetInputDataObject(0, img.GetPointer());
-  thresh->SetInputArrayToProcess(
+  bdyFilt->SetInputDataObject(0, img.GetPointer());
+  bdyFilt->SetInputArrayToProcess(
     0, 0, 0, vtkDataObject::FIELD_ASSOCIATION_POINTS, labelname.c_str());
-  thresh->SetComponentModeToUseSelected();
-  thresh->SetSelectedComponent(0);
-  thresh->SetAllScalars(1);
+  bdyFilt->UseScalarTreeOn();
+  bdyFilt->ComputeNormalsOn();
+  bdyFilt->ComputeGradientsOn();
+  bdyFilt->SetNumberOfContours(1);
   for (std::set<double>::iterator it = labelSet.begin(); it != labelSet.end(); ++it, ++i)
     {
-    thresh->ThresholdBetween(*it, *it);
-    thresh->Update();
-    vtkNew<vtkUnstructuredGrid> childData;
-    childData->ShallowCopy(thresh->GetOutput());
+    bdyFilt->SetValue(0, *it);
+    bdyFilt->Update();
+    vtkNew<vtkPolyData> childData;
+    childData->ShallowCopy(bdyFilt->GetOutput());
     Session::SMTK_CHILDREN()->Set(info, childData.GetPointer(), i);
     childData->GetInformation()->Set(Session::SMTK_LABEL_VALUE(), *it);
 
     std::ostringstream cname;
-    cname << "label " << i << " (" << *it << ")";
+    cname << "label " << i; // << " (" << *it << ")";
     MarkMeshInfo(childData.GetPointer(), imgDim, cname.str().c_str(), EXO_LABEL, int(*it));
+    if (*it == 0.0)
+      childData->GetInformation()->Set(Session::SMTK_OUTER_LABEL(), 1);
     }
-  thresh->Update();
 
   vtkSmartPointer<vtkMultiBlockDataSet> modelOut =
     vtkSmartPointer<vtkMultiBlockDataSet>::New();
@@ -398,15 +400,13 @@ smtk::model::OperatorResult ReadOperator::readLabelMap()
 
   MarkMeshInfo(modelOut.GetPointer(), imgDim, path(filename).stem().c_str(), EXO_MODEL, -1);
   MarkMeshInfo(img.GetPointer(), imgDim, labelname.c_str(), EXO_LABEL_MAP, -1);
-  /*
-  vtkMultiBlockDataSet* mbds = thresh->GetOutput();
   for (int i = 0; i < numLabels; ++i)
     {
-    std::ostringstream cname;
-    cname << "label " << i << " (" << labelSet] << ")";
-    MarkMeshInfo(mbds->GetBlock(labelSet]), imgDim, cname.str().c_str(), EXO_LABEL, -1);
+    this->exodusSession()->ensureChildParentMapEntry(
+      vtkDataObject::SafeDownCast(Session::SMTK_CHILDREN()->Get(info, i)),
+      img.GetPointer(),
+      i);
     }
-    */
 
   Session* brdg = this->exodusSession();
   smtk::model::Model smtkModelOut =

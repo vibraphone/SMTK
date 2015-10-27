@@ -132,6 +132,7 @@ public:
   static vtkInformationIntegerKey* SMTK_VISIBILITY();
   static vtkInformationIntegerKey* SMTK_GROUP_TYPE();
   static vtkInformationIntegerKey* SMTK_PEDIGREE();
+  static vtkInformationIntegerKey* SMTK_OUTER_LABEL();
   static vtkInformationStringKey* SMTK_UUID_KEY();
   static vtkInformationObjectBaseVectorKey* SMTK_CHILDREN();
   static vtkInformationDoubleKey* SMTK_LABEL_VALUE();
@@ -140,6 +141,7 @@ public:
 
 protected:
   friend class Operator;
+  friend class ReadOperator;
   friend struct EntityHandle;
 
   Session();

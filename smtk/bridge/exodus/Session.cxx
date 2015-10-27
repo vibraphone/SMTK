@@ -27,6 +27,7 @@
 #include "vtkInformationStringKey.h"
 #include "vtkInformationDoubleKey.h"
 #include "vtkPoints.h"
+#include "vtkImageData.h"
 #include "vtkPolyData.h"
 #include "vtkUnsignedIntArray.h"
 
@@ -41,6 +42,7 @@ vtkInformationKeyMacro(Session,SMTK_DIMENSION,Integer);
 vtkInformationKeyMacro(Session,SMTK_VISIBILITY,Integer);
 vtkInformationKeyMacro(Session,SMTK_GROUP_TYPE,Integer);
 vtkInformationKeyMacro(Session,SMTK_PEDIGREE,Integer);
+vtkInformationKeyMacro(Session,SMTK_OUTER_LABEL,Integer);
 vtkInformationKeyMacro(Session,SMTK_UUID_KEY,String);
 vtkInformationKeyMacro(Session,SMTK_CHILDREN,ObjectBaseVector);
 vtkInformationKeyMacro(Session,SMTK_LABEL_VALUE,Double);
@@ -511,6 +513,42 @@ static void AddCellsToTessellation(
     }
 }
 
+static void AddBoxToTessellation(
+  vtkImageData* img,
+  smtk::model::Tessellation& tess)
+{
+  if (!img)
+    return;
+
+  int boxpts[8];
+  double bds[6];
+  double x[3];
+  img->GetBounds(bds);
+  for (int i = 0; i < 2; ++i)
+    {
+    x[2] = i ? bds[5] : bds[4];
+    x[0] = bds[0]; x[1] = bds[2]; boxpts[4*i + 0] = tess.addCoords(x);
+    x[0] = bds[1]; x[1] = bds[2]; boxpts[4*i + 1] = tess.addCoords(x);
+    x[0] = bds[1]; x[1] = bds[3]; boxpts[4*i + 2] = tess.addCoords(x);
+    x[0] = bds[0]; x[1] = bds[3]; boxpts[4*i + 3] = tess.addCoords(x);
+    }
+  int edge[12][2] = {
+      { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 0 },
+      { 4, 5 }, { 5, 6 }, { 6, 7 }, { 7, 4 },
+      { 0, 4 }, { 1, 5 }, { 2, 6 }, { 3, 7 }
+  };
+  std::vector<int> tconn(4);
+  tconn[0] = TESS_POLYLINE;
+  tconn[1] = 2;
+  //size_t np = sizeof(tconn) / sizeof(tconn[0]);
+  for (size_t i = 0; i < 12; ++i)
+    {
+    tconn[2] = boxpts[edge[i][0]];
+    tconn[3] = boxpts[edge[i][1]];
+    tess.insertNextCell(tconn);
+    }
+}
+
 bool Session::addTessellation(
   const smtk::model::EntityRef& entityref,
   const EntityHandle& handle)
@@ -526,14 +564,24 @@ bool Session::addTessellation(
     return false; // Don't try to tessellate parent groups of leaf nodes.
 
   // Don't tessellate image data that is serving as a label map.
-  if (data->GetInformation()->Get(SMTK_GROUP_TYPE()) == EXO_LABEL_MAP)
+  EntityType etype = static_cast<EntityType>(
+    data->GetInformation()->Get(SMTK_GROUP_TYPE()));
+  if (etype == EXO_LABEL_MAP)
     return false;
 
-  vtkNew<vtkGeometryFilter> bdyFilter;
-  bdyFilter->MergingOff();
-  bdyFilter->SetInputDataObject(data);
-  bdyFilter->Update();
-  vtkPolyData* bdy = bdyFilter->GetOutput();
+  vtkPolyData* bdy = NULL;
+  if (etype == EXO_LABEL)
+    {
+    bdy = vtkPolyData::SafeDownCast(data);
+    }
+  else
+    {
+    vtkNew<vtkGeometryFilter> bdyFilter;
+    bdyFilter->MergingOff();
+    bdyFilter->SetInputDataObject(data);
+    bdyFilter->Update();
+    bdy = bdyFilter->GetOutput();
+    }
 
   if (!bdy)
     return SESSION_NOTHING;
@@ -543,12 +591,16 @@ bool Session::addTessellation(
   vtkPoints* pts = bdy->GetPoints();
   AddCellsToTessellation(pts, bdy->GetVerts(), SMTK_ROLE_VERTS, vertMap, tess);
   AddCellsToTessellation(pts, bdy->GetLines(), SMTK_ROLE_LINES, vertMap, tess);
+  if (data->GetInformation()->Get(Session::SMTK_OUTER_LABEL()))
+    { // In many/most label maps, there is an outermost label that will have an empty tessellation. Mark it with an outline.
+    AddBoxToTessellation(handle.parent().object<vtkImageData>(), tess);
+    }
   AddCellsToTessellation(pts, bdy->GetPolys(), SMTK_ROLE_POLYS, vertMap, tess);
   if (bdy->GetStrips() && bdy->GetStrips()->GetNumberOfCells() > 0)
     {
     std::cerr << "Warning: Triangle strips in discrete cells are unsupported. Ignoring.\n";
     }
-  if (!vertMap.empty())
+  if (!tess.coords().empty())
     entityref.manager()->setTessellation(entityref.entity(), tess);
 
   return true;
