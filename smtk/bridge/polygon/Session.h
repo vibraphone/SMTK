@@ -92,6 +92,7 @@ protected:
     }
 
   internal::EntityIdToPtr m_storage;
+  int m_nextModelNumber;
 
 private:
   Session(const Session&); // Not implemented.

@@ -84,8 +84,22 @@ smtk::model::OperatorResult CreateModel::operateInternal()
     smtk::model::Manager::Ptr mgr;
     if (sess)
       {
+      // If a name was specified, use it. Or make one up.
+      smtk::attribute::StringItem::Ptr nameItem = this->findString("name");
+      std::string modelName;
+      if (nameItem && nameItem->isEnabled())
+        {
+        modelName = nameItem->value(0);
+        }
+      else
+        {
+        std::ostringstream ss;
+        ss << "model " << sess->m_nextModelNumber++;
+        modelName = ss.str();
+        }
+
       mgr = sess->manager();
-      smtk::model::Model model = mgr->addModel(/* par. dim. */ 2, /* emb. dim. */ 3, "model");
+      smtk::model::Model model = mgr->addModel(/* par. dim. */ 2, /* emb. dim. */ 3, modelName);
       storage->setId(model.entity());
       storage->setSession(sess);
       sess->addStorage(model.entity(), storage);
