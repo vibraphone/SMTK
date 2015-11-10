@@ -47,24 +47,48 @@ smtk::model::OperatorResult CreateFaces::operateInternal()
     {
   case 0: // points, coordinates, offsets
       {
-      // create holes (as specified by offsets)
-      // create polygon_with_holes
-      //   make sure to *not* generate keyhole edges
-      // traverse resulting polygon
-      //   identify pre-existing edges and split them as required?
+      // identify pre-existing model vertices from points
+      // verify that existing edges/faces incident to model vertices
+      //        do not impinge on proposed edge/face
+      // run edge-creation pre-processing on each point-sequence?
+      // determine sub-sequences of points that will
+      //   (a) form new edges
+      //   (b) make use of existing edges (with orientation)
+      // determine loop nesting and edge splits required by intersecting loops
+      // report point sequences, model vertices (existing, imposed by intersections, non-manifold), loops w/ nesting
+      // ---
+      // create new vertices as required
+      // create edges on point sequences
+      // modify/create vertex uses
+      // create chains
+      // create edge uses
+      // create loops
+      // create faces
       }
     break;
-  case 1: // edges, offsets
+  case 1: // edges, points, coordinates
       {
-      // create holes
-      // create polygon_with_holes
-      //   make sure to *not* generate keyhole edges
-      // traverse resulting polygon
-      //   identify pre-existing edges and split them as required?
+      // for each edge
+      //   for each model vertex
+      //     walk loops where vertices have no face, aborting walk if an unselected edge is found.
+      //     mark traversed regions and do not re-traverse
+      //   OR IF NO MODEL VERTICES
+      //     edge must be periodic and oriented properly... treat it as a loop to bound a hole+/^face-filling-the-hole.
+      //     mark traversed regions and do not re-traverse
+      //   determine loop nesting and edge splits required by intersecting loops
+      //   report model vertices (imposed by intersections, non-manifold), loops w/ nesting
+      // ---
+      // create new vertices as required
+      // modify vertex uses
+      // create edge uses
+      // create loops
+      // create faces
       }
     break;
   case 2: // all non-overlapping
       {
+      // Same as case 1 but with the set of all edges in model.
+      //
       // Create a union-find struct
       // for each "model" vertex
       //   for each edge attached to each vertex
