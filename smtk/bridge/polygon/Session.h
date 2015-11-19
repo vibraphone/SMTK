@@ -57,6 +57,7 @@ protected:
   friend class CreateVertices;
   friend class CreateEdge;
   friend class SplitEdge;
+  friend class CreateFaces;
   friend class internal::pmodel;
 
   Session();

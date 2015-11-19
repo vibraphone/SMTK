@@ -41,6 +41,7 @@ namespace smtk {
         typedef boost::polygon::point_data<Coord> Point;
         typedef boost::polygon::segment_data<Coord> Segment;
         typedef boost::polygon::interval_data<Coord> Interval;
+        typedef boost::polygon::rectangle_data<Coord> Rect;
         typedef std::map<Point,Id> PointToVertexId;
         typedef std::map<Id,EntityPtr> EntityIdToPtr;
         typedef std::list<Point> PointSeq;
