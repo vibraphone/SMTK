@@ -15,6 +15,11 @@
 
 #include "smtk/SharedPtr.h"
 
+#ifndef _MSC_VER
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wvariadic-macros"
+#endif
+
 /**\brief Add typedefs to a class for identifcation.
   *
   * This macro takes a single parameter naming the
@@ -208,5 +213,9 @@
     __VA_ARGS__ \
     ) \
   )
+
+#ifndef _MSC_VER
+#  pragma GCC diagnostic pop
+#endif
 
 #endif // __smtk_SharedFromThis_h

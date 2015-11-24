@@ -13,6 +13,11 @@
  *          
  */ 
 
+#ifndef _MSC_VER
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 #include "ReadMCNP5.hpp"
 #include "moab/Interface.hpp"
 #include "moab/ReadUtilIface.hpp"

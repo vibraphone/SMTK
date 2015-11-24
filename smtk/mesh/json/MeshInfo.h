@@ -22,8 +22,8 @@
 
 
 namespace smtk {
-namespace mesh {
-namespace json {
+  namespace mesh {
+    namespace json {
 
 //----------------------------------------------------------------------------
 class SMTKCORE_EXPORT MeshInfo
@@ -74,9 +74,8 @@ private:
   smtk::common::UUIDArray m_uuids;
 };
 
-}
-}
-}
+    } // namespace json
+  } // namespace mesh
+} // namespace smtk
 
-
-#endif
+#endif // __smtk_mesh_json_MeshInfo_h

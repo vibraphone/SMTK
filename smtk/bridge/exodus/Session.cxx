@@ -38,14 +38,14 @@ namespace smtk {
   namespace bridge {
     namespace exodus {
 
-vtkInformationKeyMacro(Session,SMTK_DIMENSION,Integer);
-vtkInformationKeyMacro(Session,SMTK_VISIBILITY,Integer);
-vtkInformationKeyMacro(Session,SMTK_GROUP_TYPE,Integer);
-vtkInformationKeyMacro(Session,SMTK_PEDIGREE,Integer);
-vtkInformationKeyMacro(Session,SMTK_OUTER_LABEL,Integer);
-vtkInformationKeyMacro(Session,SMTK_UUID_KEY,String);
-vtkInformationKeyMacro(Session,SMTK_CHILDREN,ObjectBaseVector);
-vtkInformationKeyMacro(Session,SMTK_LABEL_VALUE,Double);
+vtkInformationKeyMacro(Session,SMTK_DIMENSION,Integer)
+vtkInformationKeyMacro(Session,SMTK_VISIBILITY,Integer)
+vtkInformationKeyMacro(Session,SMTK_GROUP_TYPE,Integer)
+vtkInformationKeyMacro(Session,SMTK_PEDIGREE,Integer)
+vtkInformationKeyMacro(Session,SMTK_OUTER_LABEL,Integer)
+vtkInformationKeyMacro(Session,SMTK_UUID_KEY,String)
+vtkInformationKeyMacro(Session,SMTK_CHILDREN,ObjectBaseVector)
+vtkInformationKeyMacro(Session,SMTK_LABEL_VALUE,Double)
 
 enum smtkCellTessRole {
   SMTK_ROLE_VERTS,
@@ -90,12 +90,12 @@ EntityHandle::EntityHandle(int emod, vtkDataObject* obj, Session* sess)
 }
 
 /// Construct a possibly-valid handle (of a non-top-level entity).
-EntityHandle::EntityHandle(int emod, vtkDataObject* obj, vtkDataObject* parent, int idxInParent, Session* sess)
+EntityHandle::EntityHandle(int emod, vtkDataObject* obj, vtkDataObject* parnt, int idxInParent, Session* sess)
   : m_modelNumber(emod), m_object(obj), m_session(sess)
 {
-  if (sess && obj && parent && idxInParent > 0)
+  if (sess && obj && parnt && idxInParent > 0)
     {
-    sess->ensureChildParentMapEntry(obj, parent, idxInParent);
+    sess->ensureChildParentMapEntry(obj, parnt, idxInParent);
     }
 }
 
@@ -637,9 +637,9 @@ int Session::parentIndex(vtkDataObject* obj) const
   return it->second.second;
 }
 
-bool Session::ensureChildParentMapEntry(vtkDataObject* child, vtkDataObject* parent, int idxInParent)
+bool Session::ensureChildParentMapEntry(vtkDataObject* child, vtkDataObject* parnt, int idxInParent)
 {
-  return this->m_cpMap.insert(ChildParentMap_t::value_type(child, ParentAndIndex_t(parent, idxInParent))).second;
+  return this->m_cpMap.insert(ChildParentMap_t::value_type(child, ParentAndIndex_t(parnt, idxInParent))).second;
 }
 
 /**\brief Return a delegate to export session-specific data.

@@ -14,7 +14,15 @@
 #include "smtk/SharedPtr.h"
 #include "smtk/common/UUID.h"
 
+#ifndef _MSC_VER
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wc99-extensions"
+#  pragma GCC diagnostic ignored "-Wvariadic-macros"
+#endif
 #include "boost/polygon/polygon.hpp"
+#ifndef _MSC_VER
+#  pragma GCC diagnostic pop
+#endif
 
 #include <list>
 #include <map>

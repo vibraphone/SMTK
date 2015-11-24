@@ -252,7 +252,7 @@ public: \
   /**\brief Declare the class name */ \
   std::string Cls ::className() const { return Cls ::staticClassName(); } \
   smtkImplementsOperatorRegistration(Cls, Inherits); \
-  smtkComponentInitMacro(smtk_ ##Comp## _session);
+  smtkComponentInitMacro(smtk_ ##Comp## _session)
 
 #else // SHIBOKEN_SKIP
 
@@ -264,13 +264,13 @@ public: \
   std::string Cls ::sessionName(#Comp); \
   std::string Cls ::staticClassName() { return #Cls ; } \
   std::string Cls ::className() const; \
-  std::string Cls ::findOperatorXML(const std::string& opName) const;
+  std::string Cls ::findOperatorXML(const std::string& opName) const
 
 #define smtkDeclareModelingKernel() \
   static std::string sessionName; \
   static std::string staticClassName(); \
   virtual std::string name(); \
-  virtual std::string className() const;
+  virtual std::string className() const
 
 #endif // SHIBOKEN_SKIP
 

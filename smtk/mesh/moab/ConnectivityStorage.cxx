@@ -12,7 +12,14 @@
 #include "smtk/mesh/moab/CellTypeToType.h"
 #include "smtk/mesh/moab/Interface.h"
 
+#ifndef _MSC_VER
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wc++11-long-long"
+#endif
 #include "moab/Interface.hpp"
+#ifndef _MSC_VER
+#  pragma GCC diagnostic pop
+#endif
 
 namespace smtk {
 namespace mesh {

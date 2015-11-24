@@ -23,7 +23,14 @@
 #include "vtkDataArray.h"
 #include "vtkIntArray.h"
 
+#ifndef _MSC_VER
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wc++11-long-long"
+#endif
 #include "moab/ReadUtilIface.hpp"
+#ifndef _MSC_VER
+#  pragma GCC diagnostic pop
+#endif
 
 #include "smtk/mesh/moab/Interface.h"
 #include "smtk/mesh/moab/CellTypeToType.h"

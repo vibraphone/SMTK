@@ -19,9 +19,18 @@
 #include <set>
 #include <vector>
 
+#ifndef _MSC_VER
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wc99-extensions"
+#  pragma GCC diagnostic ignored "-Wvariadic-macros"
+#endif
 //force to use filesystem version 3
 #define BOOST_FILESYSTEM_VERSION 3
 #include <boost/filesystem.hpp>
+#ifndef _MSC_VER
+#  pragma GCC diagnostic pop
+#endif
+
 using namespace boost::filesystem;
 using namespace smtk::io;
 

@@ -23,6 +23,11 @@
 #ifndef MOAB_MATRIX3_HPP
 #define MOAB_MATRIX3_HPP
 
+#ifndef _MSC_VER
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 #include "moab/Types.hpp"
 //#include "moab/EigenDecomp.hpp"
 #include <iostream>
@@ -476,4 +481,8 @@ inline std::ostream& operator<<( std::ostream& s, const moab::Matrix3& m ){
            << " |" ;
 }
 #endif//MOAB_MATRIX3_OPERATORLESS
+
+#ifndef _MSC_VER
+#  pragma GCC diagnostic pop
+#endif
 #endif //MOAB_MATRIX3_HPP

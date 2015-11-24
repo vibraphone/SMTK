@@ -107,7 +107,7 @@ enum OperatorOutcome
   /**\brief Provide a method to obtain the class name */ \
   std::string Cls ::className() const { return #Cls ; } \
   /* Force the registration methods above to be run on load */ \
-  smtkComponentInitMacro(smtk_##Comp##_operator);
+  smtkComponentInitMacro(smtk_##Comp##_operator)
 
 /**\brief A base class for solid modeling operations.
   *

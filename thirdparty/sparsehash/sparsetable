@@ -224,6 +224,11 @@
 #ifndef UTIL_GTL_SPARSETABLE_H_
 #define UTIL_GTL_SPARSETABLE_H_
 
+#ifndef _MSC_VER
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wc++11-long-long"
+#endif
+
 #include <sparsehash/internal/sparseconfig.h>
 #include <stdlib.h>             // for malloc/free
 #include <stdio.h>              // to read/write tables
@@ -1816,5 +1821,9 @@ inline void swap(sparsetable<T,GROUP_SIZE,Alloc> &x,
 }
 
 _END_GOOGLE_NAMESPACE_
+
+#ifndef _MSC_VER
+#  pragma GCC diagnostic pop
+#endif
 
 #endif  // UTIL_GTL_SPARSETABLE_H_

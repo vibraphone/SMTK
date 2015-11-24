@@ -37,6 +37,11 @@
 #ifndef MOAB_INTERFACE_HPP
 #define MOAB_INTERFACE_HPP
 
+#ifndef _MSC_VER
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wc++11-long-long"
+#endif
+
 #define MOAB_API_VERSION 1.01
 #define MOAB_API_VERSION_STRING "1.01"
 
@@ -2042,6 +2047,10 @@ inline float Interface::api_version(std::string *version_string)
 }
 
 } // namespace moab 
+
+#ifndef _MSC_VER
+#  pragma GCC diagnostic pop
+#endif
 
 #endif   // MB_INTERFACE_HPP
 

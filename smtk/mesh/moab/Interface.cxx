@@ -21,12 +21,19 @@
 #include "smtk/mesh/moab/ConnectivityStorage.h"
 #include "smtk/mesh/moab/MergeMeshVertices.h"
 
+#ifndef _MSC_VER
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wc++11-long-long"
+#endif
 #include "moab/Core.hpp"
 #include "moab/FileOptions.hpp"
 #include "moab/Interface.hpp"
 
 #include "moab/ReaderIface.hpp"
 #include "moab/Skinner.hpp"
+#ifndef _MSC_VER
+#  pragma GCC diagnostic pop
+#endif
 
 #define BEING_INCLUDED_BY_INTERFACE_CXX
 //required to go after moab includes

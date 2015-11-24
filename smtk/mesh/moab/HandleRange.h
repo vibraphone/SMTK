@@ -14,9 +14,16 @@
 #ifndef __smtk_mesh_moab_Types_h
 #define __smtk_mesh_moab_Types_h
 
+#ifndef _MSC_VER
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wc++11-long-long"
+#endif
 //these require us to install moab headers, so lets fix that
 #include "moab/EntityHandle.hpp"
 #include "moab/Range.hpp"
+#ifndef _MSC_VER
+#  pragma GCC diagnostic pop
+#endif
 
 namespace smtk {
 namespace mesh {

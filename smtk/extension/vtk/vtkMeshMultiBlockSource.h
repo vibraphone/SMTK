@@ -17,9 +17,15 @@
 #include "smtk/PublicPointerDefs.h"
 #include "smtk/common/UUID.h"
 
+#ifdef __GCC__
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wc++11-long-long"
+#endif
 #include "vtkMultiBlockDataSetAlgorithm.h"
-
 #include "vtkNew.h"
+#ifdef __GCC__
+#  pragma GCC diagnostic pop
+#endif
 
 #include <map>
 

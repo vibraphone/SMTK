@@ -11,6 +11,11 @@
 #ifndef __smtk_Function_h
 #define __smtk_Function_h
 
+#ifndef _MSC_VER
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wc99-extensions"
+#  pragma GCC diagnostic ignored "-Wvariadic-macros"
+#endif
 @FUNCTION_TYPE_HEADERS@
 
 /**! \file Function.h
@@ -45,5 +50,9 @@ namespace smtk
     ///@}
     }
 }
+
+#ifndef _MSC_VER
+#  pragma GCC diagnostic pop
+#endif
 
 #endif /* __smtk_Function_h */

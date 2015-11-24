@@ -10,7 +10,15 @@
 //
 //=============================================================================
 
+#ifndef _MSC_VER
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wc++11-long-long"
+#endif
 #include "moab/EntityType.hpp"
+#ifndef _MSC_VER
+#  pragma GCC diagnostic pop
+#endif
+
 #include "smtk/mesh/moab/CellTypeToType.h"
 
 namespace smtk {

@@ -17,7 +17,15 @@
 
 #include "smtk/attribute/System.h"
 
+#ifndef _MSC_VER
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wc99-extensions"
+#  pragma GCC diagnostic ignored "-Wvariadic-macros"
+#endif
 #include "boost/filesystem.hpp"
+#ifndef _MSC_VER
+#  pragma GCC diagnostic pop
+#endif
 
 #include <fstream>
 #include <sstream>

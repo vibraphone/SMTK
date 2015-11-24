@@ -32,6 +32,11 @@
 #ifndef MOAB_CN_HPP
 #define MOAB_CN_HPP
 
+#ifndef _MSC_VER
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wc++11-long-long"
+#endif
+
 #include "moab_export.h"
 
 #include <vector>
@@ -609,5 +614,9 @@ inline void CN::resetPermutation(const EntityType t, const int dim)
 }
 
 } // namespace moab 
+
+#ifndef _MSC_VER
+#  pragma GCC diagnostic pop
+#endif
 
 #endif

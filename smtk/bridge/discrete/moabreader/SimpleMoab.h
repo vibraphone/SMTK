@@ -11,12 +11,19 @@
 #ifndef __smoab_SimpleMoab_h
 #define __smoab_SimpleMoab_h
 
+#ifndef _MSC_VER
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wc++11-long-long"
+#endif
 #include "moab/Core.hpp"
 #include "moab/Interface.hpp"
 #include "moab/Range.hpp"
 #include "moab/CN.hpp"
 
 #include "MBTagConventions.hpp"
+#ifndef _MSC_VER
+#  pragma GCC diagnostic pop
+#endif
 
 #include <iostream>
 

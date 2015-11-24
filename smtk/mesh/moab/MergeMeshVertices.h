@@ -13,7 +13,15 @@
 #ifndef __smtk_mesh_moab_MergeMeshVertices_h
 #define __smtk_mesh_moab_MergeMeshVertices_h
 
+#ifndef _MSC_VER
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wc++11-long-long"
+#endif
 #include "moab/AdaptiveKDTree.hpp"
+#ifndef _MSC_VER
+#  pragma GCC diagnostic pop
+#endif
+
 #include "smtk/mesh/Handle.h"
 
 namespace smtk {

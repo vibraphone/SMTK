@@ -30,7 +30,15 @@
 #include "smtk/model/EntityRef.h"
 #include "smtk/common/UUIDGenerator.h"
 
+#ifndef _MSC_VER
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wc99-extensions"
+#  pragma GCC diagnostic ignored "-Wvariadic-macros"
+#endif
 #include "boost/algorithm/string.hpp"
+#ifndef _MSC_VER
+#  pragma GCC diagnostic pop
+#endif
 
 #include <iostream>
 
