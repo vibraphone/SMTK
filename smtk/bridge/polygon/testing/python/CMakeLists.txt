@@ -4,6 +4,7 @@ set(smtkPolygonSessionPythonTests
 # Additional tests that require SMTK_DATA_DIR
 set(smtkPolygonSessionPythonDataTests
   polygonCreate
+  polygonCreateFaces
   #polygonReadFile
 )
 

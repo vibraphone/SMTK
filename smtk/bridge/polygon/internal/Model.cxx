@@ -359,7 +359,7 @@ bool pmodel::splitModelEdgeAtModelVertex(
 
   // Remove edgeToSplit from its endpoint vertices so that creation
   // of new edges can succeed (otherwise it will fail when trying
-  // to insert a coincident edge at the existing edge endpoints). 
+  // to insert a coincident edge at the existing edge endpoints).
   std::pair<Id,Id> adjacentFaces = this->removeModelEdgeFromEndpoints(mgr, edgeToSplit);
 
   // Now we can create the new model edges.
@@ -374,7 +374,7 @@ bool pmodel::splitModelEdgeAtModelVertex(
 
 // TODO: Remove edgeToSplit so that creation can succeed (otherwise
 //       it will fail when trying to insert a coincident edge at the
-//       existing edge endpoints. 
+//       existing edge endpoints.
 std::pair<Id,Id> pmodel::removeModelEdgeFromEndpoints(smtk::model::ManagerPtr mgr, EdgePtr edg)
 {
   std::pair<Id,Id> result;
@@ -413,6 +413,17 @@ std::pair<Id,Id> pmodel::removeModelEdgeFromEndpoints(smtk::model::ManagerPtr mg
   return result;
 }
 
+/**\brief Return the point closest to one of an edge's endpoints.
+  *
+  * Returns the point nearest but not at the tail end of the edge
+  * (using the edge's forward ordering of points)
+  * when \a edgeEndPt is true.
+  * Returns the point nearest but not at the front end of the edge
+  * when \a edgeEndPt is false.
+  *
+  * This method is used to order edges in the immediate neighborhood
+  * of model vertices (which may only be endpoints, not interior points).
+  */
 Point pmodel::edgeTestPoint(const Id& edgeId, bool edgeEndPt) const
 {
   edge::Ptr e = this->m_session->findStorage<edge>(edgeId);

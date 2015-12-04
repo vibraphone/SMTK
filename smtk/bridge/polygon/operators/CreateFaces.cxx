@@ -71,22 +71,98 @@ struct LoopInfo
 };
 
 /// An internal structure that holds all the loops discovered, sorted by their lower-left bounding box coordinates.
-typedef std::multiset<LoopInfo> LoopsByBox;
+typedef std::map<internal::Id,LoopInfo> LoopsById;
 
+struct SweepEvent
+{
+  enum SweepEventType {
+    SEGMENT_START,
+    SEGMENT_END,
+    SEGMENT_CROSS
+  };
+  SweepEventType m_type;
+  internal::Point m_posn;
+  smtk::model::Edge m_edge[2];
+  int m_indx[2];
+
+  SweepEventType type() const { return this->m_type; }
+  const internal::Point& point() const { return this->m_posn; }
+
+  bool operator < (const SweepEvent& other) const
+    {
+    return
+      (this->m_posn.x() < other.point().x() ||
+       (this->m_posn.x() == other.point().x() &&
+        (this->m_posn.y() < other.point().y() ||
+         (this->m_posn.y() == other.point().y() &&
+          (this->m_type < other.type() ||
+           (this->m_type == other.type() &&
+            ( // Types match, perform type-specific comparisons:
+             ((this->m_type == SEGMENT_START || this->m_type == SEGMENT_END) &&
+              (this->m_edge[0] < other.m_edge[0] ||
+               (this->m_edge[0] == other.m_edge[0] && this->m_indx[0] < other.m_indx[0]))) ||
+             (this->m_type == SEGMENT_CROSS &&
+              (this->m_edge[0] < other.m_edge[0] ||
+               (this->m_edge[0] == other.m_edge[0] &&
+                (this->m_indx[0] < other.m_indx[0] ||
+                 (this->m_indx[0] == other.m_indx[0] &&
+                  (this->m_edge[1] < other.m_edge[1] ||
+                   (this->m_edge[1] == other.m_edge[1] &&
+                    (this->m_indx[1] < other.m_indx[1]
+                    ))))))))))))))) ?
+      true : false;
+    }
+
+  static SweepEvent SegmentStart(const internal::Point& posn, const smtk::model::Edge& edge, int segId)
+    {
+    SweepEvent event;
+    event.m_type = SEGMENT_START;
+    event.m_posn = posn;
+    event.m_edge[0] = edge;
+    event.m_indx[0] = segId;
+    event.m_indx[1] = -1;
+    return event;
+    }
+  static SweepEvent SegmentEnd(const internal::Point& posn, const smtk::model::Edge& edge, int segId)
+    {
+    SweepEvent event;
+    event.m_type = SEGMENT_END;
+    event.m_posn = posn;
+    event.m_edge[0] = edge;
+    event.m_indx[0] = segId;
+    event.m_indx[1] = -1;
+    return event;
+    }
+  static SweepEvent SegmentCross(const internal::Point& crossPos,
+    const smtk::model::Edge& e0, int segId0,
+    const smtk::model::Edge& e1, int segId1)
+    {
+    SweepEvent event;
+    event.m_type = SEGMENT_CROSS;
+    event.m_posn = crossPos;
+    event.m_edge[0] = e0;
+    event.m_indx[0] = segId0;
+    event.m_edge[1] = e1;
+    event.m_indx[1] = segId1;
+    return event;
+    }
+};
+
+#if 0
 static void AddLoopsForEdge(
-  Session* polySession,
+  CreateFaces* op,
   ModelEdgeMapT& modelEdgeMap,
   ModelEdgeMapT::iterator edgeInfo,
-  LoopsByBox& loops,
+  LoopsById& loops,
   smtk::model::VertexSet& visitedVerts,
   std::map<internal::Point, int>& visitedPoints // number of times a point has been encountered (not counting periodic repeat at end of a single-edge loop); used to identify points that must be promoted to model vertices.
 )
 {
-  if (!edgeInfo->first.isValid() || !polySession)
+  if (!edgeInfo->first.isValid() || !op)
     {
     return; // garbage-in? garbage-out.
     }
-  internal::EdgePtr edgeRec = polySession->findStorage<internal::edge>(edgeInfo->first.entity());
+  internal::EdgePtr edgeRec = op->findStorage<internal::edge>(edgeInfo->first.entity());
 
   smtk::model::Vertices endpts = edgeInfo->first.vertices();
   if (endpts.empty())
@@ -96,6 +172,14 @@ static void AddLoopsForEdge(
   else
     { // Choose an endpoint and walk around the edge.
     }
+}
+#endif // 0
+
+template<typename T>
+void ConditionalErase(T& container, typename T::iterator item, bool shouldErase)
+{
+  if (shouldErase)
+    container.erase(item);
 }
 
 smtk::model::OperatorResult CreateFaces::operateInternal()
@@ -111,6 +195,7 @@ smtk::model::OperatorResult CreateFaces::operateInternal()
   smtk::attribute::ModelEntityItem::Ptr edgesItem = this->findModelEntity("edges");
 
   smtk::attribute::ModelEntityItem::Ptr modelItem = this->specification()->associations();
+  smtk::model::Model model;
 
   internal::pmodel::Ptr storage; // Look up from session = internal::pmodel::create();
   bool ok = true;
@@ -184,8 +269,9 @@ smtk::model::OperatorResult CreateFaces::operateInternal()
     break;
   case 2: // all non-overlapping
       {
+      model = modelItem->value(0);
       smtk::model::Edges allEdges =
-        mgr->entitiesMatchingFlagsAs<smtk::model::Edges>(smtk::model::EDGE, /* exactMatch */ true);
+        model.cellsAs<smtk::model::Edges>();
       for (smtk::model::Edges::const_iterator it = allEdges.begin(); it != allEdges.end(); ++it)
         {
         modelEdgeMap[*it] = 0;
@@ -214,56 +300,73 @@ smtk::model::OperatorResult CreateFaces::operateInternal()
     break;
     }
 
-  // For each model vertex of each collected edge (in modelEdgeMap), traverse edges to form loops.
-  // Only loops whose edges are **all** in modelEdgeMap (with acceptable orientations) are included.
-  // Only the "tightest possible" loops are created; each model vertex has an ordered list of edge
-  // incidences and loops will be formed by visiting neighboring pairs so that no loop is bisected
-  // by an interior edge.
-  //
-  // For each edge with 0 model vertices, verify that the edge is a loop and traverse to find bounds.
-  // These edges always result in a new entry in loops.
-  //
-  // Keep the lower-leftmost and upper-rightmost points (not just model verts) of each loop.
-  // The "children" member of LoopInfo records is not populated by this pass.
-  LoopsByBox loops;
-  smtk::model::VertexSet visitedVerts; // Model vertices whose edges are already being processed.
-  std::map<internal::Point, int> visitedPoints;
+  // Create an event queue and populate it with events
+  // for each segment of each edge in modelEdgeMap.
   ModelEdgeMapT::iterator modelEdgeIt;
+  std::set<SweepEvent> eventQueue; // sorted into a queue by point-x, point-y, event-type, and then event-specific data.
   for (modelEdgeIt = modelEdgeMap.begin(); modelEdgeIt != modelEdgeMap.end(); ++modelEdgeIt)
     {
-    AddLoopsForEdge(
-      sess,
-      modelEdgeMap,
-      modelEdgeIt,
-      loops,
-      visitedVerts,
-      visitedPoints);
+    std::cout << "Consider " << modelEdgeIt->first.name() << "\n";
+    internal::EdgePtr erec =
+      this->findStorage<internal::edge>(
+        modelEdgeIt->first.entity());
+
+    if (erec->pointsSize() < 2)
+      continue; // Do not handle edges with < 2 points.
+
+    internal::PointSeq::const_iterator pit = erec->pointsBegin();
+    int seg = 0;
+    internal::Point last = *pit;
+    for (++pit; pit != erec->pointsEnd(); ++pit, ++seg)
+      {
+      eventQueue.insert(SweepEvent::SegmentStart(last, modelEdgeIt->first, seg));
+      eventQueue.insert(SweepEvent::SegmentEnd(*pit, modelEdgeIt->first, seg - 1));
+      }
     }
 
-  // Run a sweep line over the bounding points of each loop
-  // to determine nesting, split intersecting edges, and detect
-  // model vertices implied by edges that do not intersect but
-  // do share a coincident point on the same loop/face.
+  // The first event in eventQueue had better be a segment-start event.
+  // So the first thing this event-loop should do is start processing edges.
+  // As other edges are added, they must intersect all active edges
+  // and add split events as required.
+  std::set<SweepEvent>::iterator event;
+  internal::Point sweepPosn = eventQueue.begin()->point();
 
-  // Loops whose bboxes intersect the sweep-ray, sorted by when they become inactive:
-  std::multimap<internal::Point, LoopsByBox::iterator> activeLoops;
-  LoopsByBox::iterator lit = loops.begin();
-  if (!loops.empty())
+  // Set the initial sweepline to before the beginning of the queue.
+  sweepPosn.x(sweepPosn.x() - 1);
+  bool shouldErase;
+  for (
+    event = eventQueue.begin();
+    (event = eventQueue.begin()) != eventQueue.end();
+    ConditionalErase(eventQueue, event, shouldErase))
     {
-    activeLoops.insert(std::make_pair(ur(lit->m_bounds), lit));
-    }
-  while (!activeLoops.empty())
-    {
-    // Push any loops at or beyond lit onto the stack whose lower bounds
-    // are below the point where the next active loop retires
-    // (i.e., activeLoops.begin()->first).
-    // As we push loops (making them active), test:
-    //   a. whether they intersect active loop edges or points (requiring edge-split)
-    //   b. how loop is nested
+    shouldErase = true;
+    if (event->point() != sweepPosn)
+      {
+      // Update sweep position. TODO: Need to do anything special here?
+      sweepPosn = event->point();
+      }
+    std::cout
+      << "Event " << event->type() << " posn " << event->point().x() << " " << event->point().y()
+      << " edge " << event->m_edge[0].name() << " segment " << event->m_indx[0]
+      << "\n";
+    switch (event->type())
+      {
+    case SweepEvent::SEGMENT_START:
+      // Add to active edges:
+      //   Test for intersection with existing edges
+      //     If any, add SEGMENT_CROSS events.
+      //   Add to list in proper place
+      // If the edge is neighbors others in the active list, either:
+      //   a. Add
+      break;
+    case SweepEvent::SEGMENT_END:
+      break;
+    case SweepEvent::SEGMENT_CROSS:
+      break;
+      }
     }
 
   // Create vertex-use, chain, edge-use, loop, and face records
-
   smtk::model::OperatorResult result;
   if (ok)
     {
