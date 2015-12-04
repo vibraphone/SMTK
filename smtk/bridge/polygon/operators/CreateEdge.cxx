@@ -89,7 +89,7 @@ smtk::model::OperatorResult CreateEdge::operateInternal()
     }
 
   internal::pmodel::Ptr storage =
-    sess->findStorage<internal::pmodel>(
+    this->findStorage<internal::pmodel>(
       parentModel.entity());
   bool ok = true;
   int numEdges = offsetsItem->numberOfValues();
@@ -160,7 +160,7 @@ smtk::model::OperatorResult CreateEdge::operateInternal()
         for (; edgeOffset < edgeEnd; ++edgeOffset, prev = curr)
           {
           internal::vertex::Ptr vert =
-            sess->findStorage<internal::vertex>(modelItem->value(edgeOffset).entity());
+            this->findStorage<internal::vertex>(modelItem->value(edgeOffset).entity());
           if (!vert)
             {
             ok = false;

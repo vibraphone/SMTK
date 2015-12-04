@@ -94,7 +94,7 @@ smtk::model::OperatorResult CreateModel::operateInternal()
       else
         {
         std::ostringstream ss;
-        ss << "model " << sess->m_nextModelNumber++;
+        ss << "model " << this->nextModelNumber();
         modelName = ss.str();
         }
 
@@ -102,7 +102,7 @@ smtk::model::OperatorResult CreateModel::operateInternal()
       smtk::model::Model model = mgr->addModel(/* par. dim. */ 2, /* emb. dim. */ 3, modelName);
       storage->setId(model.entity());
       storage->setSession(sess);
-      sess->addStorage(model.entity(), storage);
+      this->addStorage(model.entity(), storage);
       result = this->createResult(smtk::model::OPERATION_SUCCEEDED);
       this->addEntityToResult(result, model, CREATED);
       model.setFloatProperty("x axis", smtk::model::FloatList(storage->xAxis(), storage->xAxis() + 3));

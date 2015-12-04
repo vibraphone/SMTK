@@ -10,7 +10,7 @@
 #ifndef __smtk_session_polygon_Operator_h
 #define __smtk_session_polygon_Operator_h
 
-#include "smtk/bridge/polygon/Exports.h"
+#include "smtk/bridge/polygon/Session.h"
 
 #include "smtk/model/Operator.h"
 #include "smtk/model/Manager.h"
@@ -31,6 +31,17 @@ class SMTKPOLYGONSESSION_EXPORT Operator : public smtk::model::Operator
 {
 protected:
   Session* polygonSession();
+
+  void addStorage(const smtk::common::UUID& uid, smtk::bridge::polygon::internal::entity::Ptr storage);
+  bool removeStorage(const smtk::common::UUID& uid);
+  template<typename T>
+  typename T::Ptr findStorage(const smtk::common::UUID& uid)
+    { return this->polygonSession()->findStorage<T>(uid); }
+  template<typename T>
+  T findOrAddStorage(const smtk::common::UUID& uid)
+    { return this->polygonSession()->findOrAddStorage<T>(uid); }
+  int nextModelNumber()
+    { return this->polygonSession()->m_nextModelNumber++; }
   /*
   internal::Entity* polygonEntity(const smtk::model::EntityRef& smtkEntity);
 

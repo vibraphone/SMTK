@@ -53,11 +53,6 @@ public:
 
 protected:
   friend class Operator;
-  friend class CreateModel;
-  friend class CreateVertices;
-  friend class CreateEdge;
-  friend class SplitEdge;
-  friend class CreateFaces;
   friend class internal::pmodel;
 
   Session();
