@@ -93,6 +93,10 @@ CellEntities Model::cells() const
 {
   CellEntities result;
   ManagerPtr mgr = this->manager();
+  if (!mgr)
+    {
+    return result;
+    }
   EntityRefArrangementOps::appendAllRelations(*this, INCLUDES, result);
   if (result.empty())
     { // We may have a "simple" model that has no arrangements but does have relations.
